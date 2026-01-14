@@ -339,23 +339,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dropletCountEl) dropletCountEl.textContent = droplets;
         if (waterPlantBtn) waterPlantBtn.disabled = droplets <= 0;
 
-        let spriteOffset = '0%'; // Default Lv.1
+        let plantImg = '/static/images/p1.png';
         let statusText = 'Seedling';
 
         if (currentLevel >= 2 && currentLevel < 4) {
-            spriteOffset = '-25%'; // Lv.2-3 (Sprout)
+            plantImg = '/static/images/p2.png';
             statusText = 'Sprouting';
         } else if (currentLevel >= 4 && currentLevel < 6) {
-            spriteOffset = '-50%'; // Lv.4-5 (Bush)
+            plantImg = '/static/images/p3.png';
             statusText = 'Growing';
         } else if (currentLevel >= 6) {
-            spriteOffset = '-75%'; // Lv.6+ (Bloom)
+            plantImg = '/static/images/p4.png';
             statusText = 'Blooming';
         }
 
-        if (plantSprite) {
-            plantSprite.style.transform = `translateX(${spriteOffset})`;
-            // Update status text near level
+        if (plantSprite && plantSprite.src !== window.location.origin + plantImg) {
+            // Smooth Cross-fade effect
+            plantSprite.style.opacity = '0';
+            setTimeout(() => {
+                plantSprite.src = plantImg;
+                plantSprite.style.opacity = '1';
+            }, 300);
+
+            // Update status text
             const statusTarget = document.getElementById('plant-stage-name');
             if (statusTarget) statusTarget.textContent = statusText;
         }
