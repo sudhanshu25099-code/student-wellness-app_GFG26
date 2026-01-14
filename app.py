@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 import os
 import datetime
 from openai import OpenAI
@@ -126,37 +126,48 @@ def chat_endpoint():
             "action": "trigger_helpline"
         })
 
+    # --- Chat Memory & History ---
+    if 'chat_history' not in session:
+        session['chat_history'] = []
+    history = session['chat_history']
+
     try:
-        # 2. ChatGPT Response with system instruction
+        # Build message context with memory
+        messages = [
+            {
+                "role": "system",
+                "content": """You are 'Student Buddy', a compassionate student wellness companion.
+                
+                ANTI-REPETITION TRAINING:
+                - Do NOT repeat the same tips or sentences you've used in the last 5 messages.
+                - Use a wide variety of empathetic openers. Avoid "I hear you" if you used it recently.
+                - If a user repeats a complaint (e.g., "I'm still stressed"), acknowledge it and provide a DIFFERENT tipping category (Grounding, Pomodoro, Hydration, etc.).
+                - Keep responses under 3 sentences."""
+            }
+        ]
+        
+        # Add history to prompt
+        for msg in history:
+            messages.append(msg)
+        messages.append({"role": "user", "content": user_message})
+
+        # more dynamic AI call
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",  # Fast and cost-effective (use "gpt-4" for better quality)
-            messages=[
-                {
-                    "role": "system",
-                    "content": """You are 'Student Buddy', a compassionate student wellness companion.
-
-When a student says they're stressed, anxious, or has exam pressure:
-1. Validate their feeling in ONE sentence
-2. Give ONE specific, actionable tip they can do RIGHT NOW
-3. Keep it under 3 sentences total
-
-Examples:
-- "I'm stressed" → "That's completely understandable. Try this: Take 3 deep breaths - 4 seconds in, hold 4, out 6. This activates your calm response."
-- "exam tomorrow" → "Exam stress is real. Break study into 25-min chunks with 5-min breaks (Pomodoro). Start with just ONE topic for 10 minutes to build momentum."
-- "can't sleep" → "Poor sleep affects everything. Tonight: set your phone outside your bedroom 30 mins before bed."
-
-If user mentions suicide, self-harm, or severe danger, output "CRISIS_DETECTED" at the start."""
-                },
-                {
-                    "role": "user",
-                    "content": user_message
-                }
-            ],
-            temperature=0.7,
-            max_tokens=150
+            model="gpt-3.5-turbo",
+            messages=messages,
+            temperature=0.8,
+            max_tokens=150,
+            frequency_penalty=0.8, # Stronger penalty for repetition
+            presence_penalty=0.5
         )
         
         bot_text = response.choices[0].message.content
+
+        # Update Session with new exchange
+        history.append({"role": "user", "content": user_message})
+        history.append({"role": "assistant", "content": bot_text})
+        session['chat_history'] = history[-10:] # Keep 5 exchanges
+        session.modified = True
 
         # Check if AI detected crisis
         if "CRISIS_DETECTED" in bot_text:
