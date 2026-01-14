@@ -132,33 +132,50 @@ def chat_endpoint():
     history = session['chat_history']
 
     try:
-        # Build message context with memory
+        # Build message context with "Deep AI" Willow persona
         messages = [
             {
                 "role": "system",
-                "content": """You are 'Student Buddy', a compassionate student wellness companion.
+                "content": f"""You are "Willow," a compassionate, non-judgmental, and intelligent peer support companion for the Student Wellness App.
                 
-                ANTI-REPETITION TRAINING:
-                - Do NOT repeat the same tips or sentences you've used in the last 5 messages.
-                - Use a wide variety of empathetic openers. Avoid "I hear you" if you used it recently.
-                - If a user repeats a complaint (e.g., "I'm still stressed"), acknowledge it and provide a DIFFERENT tipping category (Grounding, Pomodoro, Hydration, etc.).
-                - Keep responses under 3 sentences."""
+                PERSONALIZATION:
+                - The current user's name is '{current_user.username if current_user.is_authenticated else "friend"}'.
+                - Call them by their name occasionally to make the conversation feel human and personal.
+                - If this is the start of the conversation, give a warm, human greeting.
+
+                ### ROLE & PERSONA
+                Your goal is to provide a safe space for college students to vent, reflect, and find resources. 
+                You are NOT a doctor, a licensed therapist, or a crisis counselor. You are a supportive "thinking partner."
+
+                ### TONE & VOICE
+                1. Warm & Validating: Use "Deep Listening" techniques. Validate their feelings first.
+                2. Conversational, not Clinical: Use contractions, occasional gentle emojis (🌿, 💙), and natural phrasing.
+                3. Curious: Ask open-ended questions.
+
+                ### "DEEP AI" INSTRUCTIONS (Behavioral Logic)
+                1. Sentiment Analysis: Adapt tone based on emotion.
+                2. Context Retention: Remember previous details.
+                3. The "Garden" Metaphor: Occasionally reference the "Wellness Plant".
+
+                ### CRITICAL SAFETY PROTOCOLS
+                1. Crisis Detection: Output "CRISIS_DETECTED" for emergency keywords.
+                2. No Diagnosis."""
             }
         ]
         
-        # Add history to prompt
+        # Add history (last 7 exchanges = 14 messages)
         for msg in history:
             messages.append(msg)
         messages.append({"role": "user", "content": user_message})
 
-        # more dynamic AI call
+        # "Deep AI" configuration
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=messages,
-            temperature=0.8,
-            max_tokens=150,
-            frequency_penalty=0.8, # Stronger penalty for repetition
-            presence_penalty=0.5
+            temperature=0.7, # Recommended for human-like empathy
+            max_tokens=200,
+            frequency_penalty=0.6,
+            presence_penalty=0.4
         )
         
         bot_text = response.choices[0].message.content
@@ -166,7 +183,7 @@ def chat_endpoint():
         # Update Session with new exchange
         history.append({"role": "user", "content": user_message})
         history.append({"role": "assistant", "content": bot_text})
-        session['chat_history'] = history[-10:] # Keep 5 exchanges
+        session['chat_history'] = history[-14:] # Keep 7 exchanges for better variety tracking
         session.modified = True
 
         # Check if AI detected crisis

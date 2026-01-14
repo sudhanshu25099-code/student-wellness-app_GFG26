@@ -114,20 +114,54 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- Voice Selection Logic (Human Lady Voice) ---
+    let selectedVoice = null;
+    function loadVoices() {
+        if (!ttsSupported) return;
+        const voices = speechSynthesis.getVoices();
+        // Priority for Google Indian English or other Indian English female voices
+        selectedVoice = voices.find(v => v.name.includes('Indian English') || v.lang === 'en-IN')
+            || voices.find(v => v.name.includes('Samantha') || v.name.includes('Victoria') || v.name.includes('Google US English'))
+            || voices.find(v => v.name.toLowerCase().includes('female'))
+            || voices[0];
+    }
+
+    if (ttsSupported) {
+        loadVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+    }
+
     // Function to speak text
     function speakText(text) {
-        if (!ttsEnabled || !ttsSupported) return;
+        if (!ttsEnabled || !ttsSupported || !text) return;
 
-        // Cancel any ongoing speech
         speechSynthesis.cancel();
-
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.9; // Slightly slower for clarity
-        utterance.pitch = 1.0;
+        if (selectedVoice) utterance.voice = selectedVoice;
+        utterance.rate = 1.0;
+        utterance.pitch = 1.05; // Slightly higher pitch for a warmer female tone
         utterance.volume = 1.0;
 
         speechSynthesis.speak(utterance);
     }
+
+    // --- Personalized Greeting ---
+    function sendWelcomeMessage() {
+        const username = window.userContext?.username || 'friend';
+        const welcomeText = `Hi ${username}! I'm Willow, your wellness companion. How are you feeling today? 🌿`;
+
+        // Add message to UI
+        setTimeout(() => {
+            addMessage(welcomeText, 'bot');
+            // We don't speak the welcome message immediately to avoid startling the user
+            // and because TTS might be disabled by default.
+        }, 1000);
+    }
+
+    // Trigger welcome
+    sendWelcomeMessage();
 
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
