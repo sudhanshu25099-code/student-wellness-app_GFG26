@@ -133,7 +133,7 @@ def chat_endpoint():
             messages=[
                 {
                     "role": "system",
-                    "content": """You are 'The Buddy', a compassionate student wellness companion.
+                    "content": """You are 'Student Buddy', a compassionate student wellness companion.
 
 When a student says they're stressed, anxious, or has exam pressure:
 1. Validate their feeling in ONE sentence
