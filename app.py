@@ -44,6 +44,13 @@ class CounselorRequest(db.Model):
     
     user = db.relationship('User', backref=db.backref('requests', lazy=True))
 
+class ChatMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    role = db.Column(db.String(20), nullable=False) # 'user' or 'assistant'
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -127,10 +134,16 @@ def chat_endpoint():
             "action": "trigger_helpline"
         })
 
-    # --- Chat Memory & History ---
-    if 'chat_history' not in session:
-        session['chat_history'] = []
-    history = session['chat_history']
+    # --- Permanent Memory (Database-Backed) ---
+    if current_user.is_authenticated:
+        # Load last 12 messages from DB
+        db_history = ChatMessage.query.filter_by(user_id=current_user.id).order_by(ChatMessage.timestamp.desc()).limit(12).all()
+        history = [{"role": msg.role, "content": msg.content} for msg in reversed(db_history)]
+    else:
+        # Fallback to session for guests
+        if 'chat_history' not in session:
+            session['chat_history'] = []
+        history = session['chat_history']
 
     # --- Archetype Selection ---
     archetypes = [
@@ -141,13 +154,12 @@ def chat_endpoint():
     ]
     style = random.choice(archetypes)
     
-    # Extract last few bot replies to explicitly ban them
-    last_bot_replies = [m['content'][:50] + "..." for m in history if m['role'] == 'assistant'][-3:]
-    last_bot_starts = [m['content'].split()[:3] for m in history if m['role'] == 'assistant'][-3:]
-    banned_starts = ", ".join([" ".join(start) for start in last_bot_starts])
+    # Identifybot's last few openers to BANNED them
+    last_bot_starts = [m['content'].split()[:4] for m in history if m['role'] == 'assistant'][-3:]
+    banned_phrases = [" ".join(start) for start in last_bot_starts]
 
     try:
-        # Build message context
+        # Build message context with Maximum Variety rules
         messages = [
             {
                 "role": "system",
@@ -156,15 +168,13 @@ def chat_endpoint():
                 CURRENT USER: {current_user.username if current_user.is_authenticated else "friend"}
                 CURRENT SUPPORT STYLE: {style}
                 
-                CRITICAL VARIETY RULES:
-                1. DO NOT START with any of these phrases you used recently: [{banned_starts}]
-                2. NEVER use overused robotic openers like "I hear you", "It sounds like", or "That sounds challenging". 
-                3. BE PROACTIVE: Instead of just validating, jump straight into a unique, warm perspective or an unexpected wellness tip.
-                4. DYNAMICS: If the user repeats themselves, do NOT repeat your advice. Gently say "We touched on that, let's try a different angle..." and pivot.
+                STRICT ANTI-REPETITION PROTOCOL:
+                1. DO NOT START with any of these recent openings: {banned_phrases}
+                2. NO ROBOTIC EMPATHY: Avoid "I'm so sorry...", "It makes sense...", or "I hear you". 
+                3. FRESH PERSPECTIVES: If a user mentions "depression" or "suffering", do NOT just give empathy. Ask a specific curious question or offer a physical grounding action (like cold water to the face).
+                4. DYNAMICS: If the user repeats themselves, acknowledge it ("I know we're looping back, let's look at this from a new angle...") and change your tone.
 
-                ### PERSONA
-                You are a non-judgmental thinking partner. You are NOT a doctor.
-                Keep responses under 3 sentences. Be context-aware and emotionally resonant."""
+                Keep responses under 3 sentences. Be context-aware and human."""
             }
         ]
         
@@ -173,31 +183,31 @@ def chat_endpoint():
             messages.append(msg)
         messages.append({"role": "user", "content": user_message})
 
-        # "Deep AI" configuration with jitter
+        # Deep AI call
         response = client.chat.completions.create(
-            model="gpt-4o-mini", # Upgraded for better variety and intelligence
+            model="gpt-4o-mini",
             messages=messages,
-            temperature=0.85, # Increased for more creative diversity
+            temperature=0.9, # Higher for maximum variety
             max_tokens=200,
-            frequency_penalty=1.5, # Aggressive penalty for repeated words
-            presence_penalty=0.8    # High encouragement for new topics
+            frequency_penalty=1.8, # Extreme penalty for word repetition
+            presence_penalty=1.0    # High encouragement for new topics
         )
         
         bot_text = response.choices[0].message.content
 
-        # --- Session Size Management ---
-        history.append({"role": "user", "content": user_message})
-        history.append({"role": "assistant", "content": bot_text})
-        
-        history = history[-12:] # Keep 6 exchanges
-        
-        total_chars = sum(len(m['content']) for m in history)
-        while total_chars > 3000 and len(history) > 2:
-            history.pop(0)
-            total_chars = sum(len(m['content']) for m in history)
-
-        session['chat_history'] = history
-        session.modified = True
+        # --- Save to Permanent Memory ---
+        if current_user.is_authenticated:
+            # Save User Message
+            db.session.add(ChatMessage(user_id=current_user.id, role='user', content=user_message))
+            # Save Bot Response
+            db.session.add(ChatMessage(user_id=current_user.id, role='assistant', content=bot_text))
+            db.session.commit()
+        else:
+            # Fallback for guests
+            history.append({"role": "user", "content": user_message})
+            history.append({"role": "assistant", "content": bot_text})
+            session['chat_history'] = history[-10:]
+            session.modified = True
 
         # Check if AI detected crisis
         if "CRISIS_DETECTED" in bot_text:
