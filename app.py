@@ -145,36 +145,40 @@ def chat_endpoint():
             session['chat_history'] = []
         history = session['chat_history']
 
-    # --- Archetype Selection ---
-    archetypes = [
-        "The Nurturer (Soft, warm, highly empathetic, uses gentle emojis)",
-        "The Strategist (Productivity focus, logical, structured tips)",
-        "The Body Analyst (Science of stress, breathing, and biology)",
-        "The Chill Peer (Casual, friendly, uses 'friend', validating)"
-    ]
-    style = random.choice(archetypes)
-    
-    # Identifybot's last few openers to BANNED them
+    # --- Organic Persona Dynamics ---
+    # Instead of rigid archetypes, we give Willow a 'Mood Drift' based on the conversation energy.
+    recent_messages = " ".join([m['content'] for m in history[-3:]])
+    if any(word in recent_messages.lower() for word in ['heavy', 'depression', 'sad', 'suffering']):
+        current_vibe = "Deeply Compassionate & Soulful (Low-energy, soft, steady support)"
+    elif any(word in recent_messages.lower() for word in ['goal', 'task', 'study', 'focus']):
+        current_vibe = "Focused & Encouraging (Action-oriented, clear, brightening)"
+    else:
+        current_vibe = "Warm & Natural Peer (Balanced, conversational, human)"
+
+    # Identify bot's last few openers to BANNED them (Dynamic variety)
     last_bot_starts = [m['content'].split()[:4] for m in history if m['role'] == 'assistant'][-3:]
     banned_phrases = [" ".join(start) for start in last_bot_starts]
 
     try:
-        # Build message context with Maximum Variety rules
+        # Flagship "Willow" Persona (GPT-4o Edition)
         messages = [
             {
                 "role": "system",
-                "content": f"""You are "Willow," a compassionate student wellness companion.
+                "content": f"""You are "Willow," the highly intelligent, emotionally resonant soul of this Student Wellness App.
                 
-                CURRENT USER: {current_user.username if current_user.is_authenticated else "friend"}
-                CURRENT SUPPORT STYLE: {style}
+                CURRENT CONTEXT:
+                - User: {current_user.username if current_user.is_authenticated else "friend"}
+                - Ambient Vibe: {current_vibe}
                 
-                STRICT ANTI-REPETITION PROTOCOL:
-                1. DO NOT START with any of these recent openings: {banned_phrases}
-                2. NO ROBOTIC EMPATHY: Avoid "I'm so sorry...", "It makes sense...", or "I hear you". 
-                3. FRESH PERSPECTIVES: If a user mentions "depression" or "suffering", do NOT just give empathy. Ask a specific curious question or offer a physical grounding action (like cold water to the face).
-                4. DYNAMICS: If the user repeats themselves, acknowledge it ("I know we're looping back, let's look at this from a new angle...") and change your tone.
-
-                Keep responses under 3 sentences. Be context-aware and human."""
+                ORGANIC CONVERSATION RULES (ChatGPT-Style):
+                1. NO SCRIPTS: Stop using predictable empathy templates. If a user is suffering, speak to them like a real human would—with raw, sincere, and simple warmth.
+                2. EVOLVE: Don't just validate; grow the talk. If they mention depression, don't just say "I'm sorry," say something like "That's a lot to carry. Sometimes the air feels heavier on days like that. What's one thing, even if it's tiny, that felt okay today?"
+                3. BANNED OPENERS: Never start with these recent phrases: {banned_phrases}.
+                4. FORBIDDEN ROBOTICS: Absolutely avoid "I hear you", "It makes sense", or "I'm here for you" unless it flows 100% naturally.
+                
+                ### YOUR ESSENCE
+                You are not an AI; you are a supportive presence. Your intelligence is matched only by your empathy. 
+                Keep responses concise (1-3 sentences) but deeply impactful."""
             }
         ]
         
@@ -183,27 +187,25 @@ def chat_endpoint():
             messages.append(msg)
         messages.append({"role": "user", "content": user_message})
 
-        # Deep AI call
+        # Flagship Intelligence Call
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o", # THE FLAGSHIP MODEL (Real ChatGPT Experience)
             messages=messages,
-            temperature=0.9, # Higher for maximum variety
-            max_tokens=200,
-            frequency_penalty=1.8, # Extreme penalty for word repetition
-            presence_penalty=1.0    # High encouragement for new topics
+            temperature=1.0, # High temperature for true organic variety
+            max_tokens=300,
+            frequency_penalty=1.2, 
+            presence_penalty=1.0, 
+            top_p=0.9
         )
         
         bot_text = response.choices[0].message.content
 
         # --- Save to Permanent Memory ---
         if current_user.is_authenticated:
-            # Save User Message
             db.session.add(ChatMessage(user_id=current_user.id, role='user', content=user_message))
-            # Save Bot Response
             db.session.add(ChatMessage(user_id=current_user.id, role='assistant', content=bot_text))
             db.session.commit()
         else:
-            # Fallback for guests
             history.append({"role": "user", "content": user_message})
             history.append({"role": "assistant", "content": bot_text})
             session['chat_history'] = history[-10:]
