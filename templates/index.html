@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindSpace - Student Wellness</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    keyframes: {
+                        shimmer: {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(100%)' }
+                        }
+                    },
+                    animation: {
+                        shimmer: 'shimmer 2s infinite',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50 text-slate-800 antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#"
+                class="text-2xl font-bold bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent">MindSpace</a>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#home" class="text-sm font-medium hover:text-brand-600 transition-colors">Home</a>
+                <a href="/focus" class="text-sm font-medium hover:text-brand-600 transition-colors">Focus Zone</a>
+                <a href="/tools" class="text-sm font-medium hover:text-brand-600 transition-colors">Tools</a>
+                <a href="/matrix" class="text-sm font-medium hover:text-brand-600 transition-colors">Task Scheduler</a>
+                {% if current_user.is_authenticated %}
+                <span class="text-sm text-gray-500 italic">Hi, {{ current_user.username }}</span>
+                <a href="/logout"
+                    class="bg-red-50 text-red-600 px-4 py-2 rounded-full text-sm font-bold border border-red-100 hover:bg-red-100 transition-all">Logout</a>
+                {% else %}
+                <a href="/login" class="text-sm font-medium hover:text-brand-600 transition-colors">Login</a>
+                <a href="/signup"
+                    class="bg-brand-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-brand-700 transition-all shadow-lg hover:shadow-brand-500/30">Sign
+                    Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="relative pt-24 pb-12 lg:pt-32 lg:pb-24 overflow-hidden">
+        <div class="container mx-auto px-6 relative z-10">
+
+            <!-- Top Row: Text (Left) & Chatbot (Right) -->
+            <div class="flex flex-col lg:flex-row items-start justify-between gap-12 lg:gap-8 mb-16">
+
+                <!-- Left: Hero Text -->
+                <div class="lg:w-5/12 text-left pt-4">
+                    <div
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 text-brand-600 text-xs font-bold mb-6 border border-brand-100 shadow-sm hover:scale-105 transition-transform cursor-default">
+                        <span class="relative flex h-2 w-2">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
+                        </span>
+                        AI-Powered Wellness
+                    </div>
+
+                    <h1 class="text-5xl lg:text-7xl font-bold leading-tight mb-6 text-slate-900 tracking-tight">
+                        Your confidential <br>
+                        <span
+                            class="bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent">wellness
+                            companion.</span>
+                    </h1>
+
+                    <p class="text-lg text-slate-600 mb-8 leading-relaxed max-w-lg">
+                        A judgment-free space to track your mood, find resources, and chat with "The Buddy" – your 24/7
+                        AI mental health first-aid kit.
+                    </p>
+
+                    <div class="flex gap-4">
+                        <a href="#resources"
+                            class="px-8 py-4 rounded-full bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+                            Explore Library
+                        </a>
+                        <a href="#chat-interface"
+                            class="px-8 py-4 rounded-full border-2 border-slate-200 text-slate-700 font-bold hover:border-brand-500 hover:text-brand-600 transition-all">
+                            Chat Now
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right: Chat Interface (The Buddy) -->
+                <div id="chat-interface" class="lg:w-5/12 w-full">
+                    <div
+                        class="relative bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/10 border border-gray-100 overflow-hidden transform transition-all hover:scale-[1.01] hover:shadow-blue-900/15">
+                        <!-- Chat Header -->
+                        <div
+                            class="bg-gradient-to-r from-brand-500 to-brand-600 p-6 flex items-center justify-between text-white">
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm text-2xl shadow-inner">
+                                    🤖
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-xl tracking-tight">The Buddy</h3>
+                                    <p class="text-xs text-brand-100 flex items-center gap-1.5 font-medium">
+                                        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> Online Now
+                                    </p>
+                                </div>
+                            </div>
+                            <button id="speaker-toggle"
+                                class="text-white/80 hover:text-white transition-colors p-2.5 rounded-full hover:bg-white/10 active:bg-white/20">
+                                <svg id="speaker-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6"
+                                    viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                <svg id="speaker-muted-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden"
+                                    viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Chat Messages Area -->
+                        <div id="chat-box" class="h-96 overflow-y-auto p-6 bg-slate-50 space-y-4 scroll-smooth">
+                            <!-- Welcome Message -->
+                            <div class="flex items-start gap-3 animate-fade-in-up">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-brand-100 flex-shrink-0 flex items-center justify-center text-xs shadow-sm">
+                                    🤖</div>
+                                <div
+                                    class="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm text-sm text-slate-700 max-w-[85%] border border-gray-100">
+                                    Hi there! I'm your wellness buddy. How are you feeling today? You can say things
+                                    like "I'm stressed" or "I need to focus".
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Input Area -->
+                        <div class="p-4 bg-white border-t border-gray-100">
+                            <form id="chat-form" class="flex gap-2 relative">
+                                <input type="text" id="user-input" placeholder="Type your message..."
+                                    class="flex-1 bg-gray-50 border border-gray-200 rounded-full pl-5 pr-12 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all shadow-inner">
+
+                                <!-- Mic Button -->
+                                <button type="button" id="mic-btn"
+                                    class="absolute right-[4rem] top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-600 transition-colors p-2 rounded-full hover:bg-brand-50 active:bg-brand-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+
+                                <button type="submit"
+                                    class="bg-brand-600 text-white rounded-full p-3.5 hover:bg-brand-700 transition-all shadow-lg hover:shadow-brand-500/40 active:scale-95 z-10">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path
+                                            d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Row: Wellness Plant (Full Width) -->
+            <div class="w-full">
+                <div
+                    class="bg-white/80 backdrop-blur-xl rounded-[3rem] p-10 shadow-2xl border border-white/60 relative overflow-hidden group hover:shadow-green-100/50 transition-all duration-700">
+                    <!-- Top Gradient Line -->
+                    <div
+                        class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-green-400 via-teal-400 to-emerald-500">
+                    </div>
+
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-10">
+
+                        <!-- Left: Status & 3D Plant -->
+                        <div class="md:w-1/3 flex flex-col items-center md:items-start text-center md:text-left">
+                            <div class="mb-6">
+                                <h3
+                                    class="text-3xl font-bold text-slate-800 flex items-center gap-3 justify-center md:justify-start">
+                                    <span class="text-4xl filter drop-shadow-md">🌱</span> Your Growth
+                                </h3>
+                                <p class="text-slate-500 text-lg mt-1">Nurture yourself to grow your plant</p>
+                            </div>
+
+                            <div
+                                class="relative bg-gradient-to-b from-blue-50 to-green-50 rounded-[2rem] p-8 w-full max-w-sm h-72 flex items-center justify-center border border-green-100 shadow-inner group-hover:bg-green-50/50 transition-colors">
+                                <!-- Image Sprite Container -->
+                                <div class="w-56 h-56 overflow-hidden relative">
+                                    <img id="plant-sprite" src="/static/images/wellness_plant_stages.png"
+                                        alt="Wellness Plant"
+                                        class="absolute top-0 left-0 max-w-none h-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.34,1.56,0.64,1)] filter drop-shadow-xl"
+                                        style="width: 400%; transform: translateX(0%);">
+                                </div>
+                                <div
+                                    class="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-green-700 shadow-sm border border-green-100">
+                                    <span id="plant-stage-name">Seedling</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Tasks & Progress -->
+                        <div class="md:w-2/3 w-full">
+                            <div class="flex items-end justify-between mb-6">
+                                <div>
+                                    <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Current
+                                        Level</span>
+                                    <div id="plant-level"
+                                        class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-teal-500">
+                                        Lv.1</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">XP
+                                        Progress</div>
+                                    <span id="progress-text" class="text-xl font-bold text-slate-700">0 / 10 XP</span>
+                                </div>
+                            </div>
+
+                            <!-- XP Bar -->
+                            <div
+                                class="relative h-6 bg-slate-100 rounded-full overflow-hidden mb-8 shadow-inner border border-slate-200">
+                                <div id="xp-bar"
+                                    class="absolute top-0 left-0 h-full bg-gradient-to-r from-green-400 to-teal-500 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(52,211,153,0.5)]"
+                                    style="width: 0%">
+                                    <div class="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]"></div>
+                                </div>
+                            </div>
+
+                            <!-- Grid Checklist -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <!-- Sleep -->
+                                <label
+                                    class="group/item flex items-center gap-3 p-4 bg-white rounded-2xl cursor-pointer border border-slate-100 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-100/50 transition-all active:scale-[0.98]">
+                                    <div class="relative flex items-center justify-center w-7 h-7">
+                                        <input type="checkbox" id="task-sleep"
+                                            class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 rounded-[6px] checked:bg-indigo-500 checked:border-indigo-500 transition-all"
+                                            data-points="2">
+                                        <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <span class="block font-bold text-slate-700 text-sm">Sleep 7h+</span>
+                                        <span class="text-[10px] text-slate-400 font-medium">Rest & Repair</span>
+                                    </div>
+                                    <span
+                                        class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">+2
+                                        XP</span>
+                                </label>
+
+                                <!-- Water -->
+                                <label
+                                    class="group/item flex items-center gap-3 p-4 bg-white rounded-2xl cursor-pointer border border-slate-100 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-100/50 transition-all active:scale-[0.98]">
+                                    <div class="relative flex items-center justify-center w-7 h-7">
+                                        <input type="checkbox" id="task-water"
+                                            class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 rounded-[6px] checked:bg-blue-500 checked:border-blue-500 transition-all"
+                                            data-points="1">
+                                        <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <span class="block font-bold text-slate-700 text-sm">Drink Water</span>
+                                        <span class="text-[10px] text-slate-400 font-medium">Hydrate</span>
+                                    </div>
+                                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">+1
+                                        XP</span>
+                                </label>
+
+                                <!-- Exercise -->
+                                <label
+                                    class="group/item flex items-center gap-3 p-4 bg-white rounded-2xl cursor-pointer border border-slate-100 hover:border-orange-300 hover:shadow-lg hover:shadow-orange-100/50 transition-all active:scale-[0.98]">
+                                    <div class="relative flex items-center justify-center w-7 h-7">
+                                        <input type="checkbox" id="task-exercise"
+                                            class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 rounded-[6px] checked:bg-orange-500 checked:border-orange-500 transition-all"
+                                            data-points="2">
+                                        <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <span class="block font-bold text-slate-700 text-sm">Active 20m</span>
+                                        <span class="text-[10px] text-slate-400 font-medium">Move Body</span>
+                                    </div>
+                                    <span
+                                        class="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-lg">+2
+                                        XP</span>
+                                </label>
+
+                                <!-- Meditate -->
+                                <label
+                                    class="group/item flex items-center gap-3 p-4 bg-white rounded-2xl cursor-pointer border border-slate-100 hover:border-purple-300 hover:shadow-lg hover:shadow-purple-100/50 transition-all active:scale-[0.98]">
+                                    <div class="relative flex items-center justify-center w-7 h-7">
+                                        <input type="checkbox" id="task-meditate"
+                                            class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 rounded-[6px] checked:bg-purple-500 checked:border-purple-500 transition-all"
+                                            data-points="2">
+                                        <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <span class="block font-bold text-slate-700 text-sm">Meditate</span>
+                                        <span class="text-[10px] text-slate-400 font-medium">Clear Mind</span>
+                                    </div>
+                                    <span
+                                        class="text-xs font-bold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-lg">+2
+                                        XP</span>
+                                </label>
+
+                                <!-- Healthy Meal -->
+                                <label
+                                    class="group/item flex items-center gap-3 p-4 bg-white rounded-2xl cursor-pointer border border-slate-100 hover:border-green-300 hover:shadow-lg hover:shadow-green-100/50 transition-all active:scale-[0.98]">
+                                    <div class="relative flex items-center justify-center w-7 h-7">
+                                        <input type="checkbox" id="task-meal"
+                                            class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 rounded-[6px] checked:bg-green-500 checked:border-green-500 transition-all"
+                                            data-points="2">
+                                        <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <span class="block font-bold text-slate-700 text-sm">Healthy Meal</span>
+                                        <span class="text-[10px] text-slate-400 font-medium">Fuel Up</span>
+                                    </div>
+                                    <span class="text-xs font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-lg">+2
+                                        XP</span>
+                                </label>
+
+                                <!-- Social -->
+                                <label
+                                    class="group/item flex items-center gap-3 p-4 bg-white rounded-2xl cursor-pointer border border-slate-100 hover:border-pink-300 hover:shadow-lg hover:shadow-pink-100/50 transition-all active:scale-[0.98]">
+                                    <div class="relative flex items-center justify-center w-7 h-7">
+                                        <input type="checkbox" id="task-social"
+                                            class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 rounded-[6px] checked:bg-pink-500 checked:border-pink-500 transition-all"
+                                            data-points="1">
+                                        <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <span class="block font-bold text-slate-700 text-sm">Connect</span>
+                                        <span class="text-[10px] text-slate-400 font-medium">Friends</span>
+                                    </div>
+                                    <span class="text-xs font-bold text-pink-600 bg-pink-50 px-2.5 py-1 rounded-lg">+1
+                                        XP</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Beams Background -->
+            <div class="absolute top-0 left-0 w-full h-full z-0 pointer-events-none">
+                <div
+                    class="absolute -top-24 -right-24 w-96 h-96 bg-brand-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob">
+                </div>
+                <div
+                    class="absolute top-48 -left-24 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000">
+                </div>
+            </div>
+    </section>
+
+    <!-- Resource Hub -->
+    <section id="resources" class="py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="text-brand-600 font-semibold tracking-wide uppercase text-xs">Self-Care Library</span>
+                <h2 class="text-3xl md:text-4xl font-bold mt-2 text-slate-900">Curated Wellness Resources</h2>
+            </div>
+
+            <div id="resource-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Javascript will load resources here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Helpline Modal (Hidden by default) -->
+    <div id="helpline-modal"
+        class="fixed inset-0 z-[100] bg-slate-900/90 hidden flex items-center justify-center backdrop-blur-sm">
+        <div
+            class="bg-white w-full max-w-md p-8 rounded-3xl text-center shadow-2xl mx-4 border-t-8 border-red-500 animate-bounce-in">
+            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">We're Here for You</h3>
+            <p class="text-gray-600 mb-8">It sounds like you might be going through a crisis. Please reach out to a
+                professional immediately.</p>
+            <div class="space-y-3">
+                <a href="tel:988"
+                    class="block w-full py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg hover:shadow-red-500/40">
+                    Call 988 (LifeLine)
+                </a>
+                <button onclick="closeModal()"
+                    class="block w-full py-4 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors">
+                    I'm Safe, Close This
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Panic Button Removed -->
+    <span
+        class="absolute right-20 whitespace-nowrap bg-slate-900 text-white px-3 py-1 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+        Need help NOW?
+    </span>
+    </button>
+
+    <!-- Panic Mode Overlay -->
+    <div id="panic-overlay"
+        class="fixed inset-0 bg-gradient-to-br from-blue-900 to-indigo-900 hidden flex items-center justify-center z-[200] transition-opacity duration-1000">
+        <div class="text-center max-w-2xl px-6">
+            <h2 class="text-4xl font-bold text-white mb-8">Take a Moment. Breathe.</h2>
+
+            <!-- Breathing Circle -->
+            <div class="relative w-64 h-64 mx-auto mb-12">
+                <div id="breath-circle"
+                    class="absolute inset-0 rounded-full bg-blue-400/30 border-4 border-blue-300 flex items-center justify-center transition-all duration-4000">
+                    <span id="breath-text" class="text-2xl font-semibold text-white">Breathe In</span>
+                </div>
+            </div>
+
+            <p class="text-xl text-blue-100 mb-8">Follow the circle. You've got this.</p>
+
+            <button id="exit-panic"
+                class="px-8 py-3 bg-white text-indigo-900 rounded-full font-semibold hover:bg-blue-50 transition-all shadow-xl">
+                I'm feeling better
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>
