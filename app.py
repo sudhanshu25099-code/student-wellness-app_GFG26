@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 import os
+import random
 import datetime
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -131,39 +132,38 @@ def chat_endpoint():
         session['chat_history'] = []
     history = session['chat_history']
 
+    # --- Archetype Selection (Force Diversity) ---
+    archetypes = [
+        "The Nurturer (Soft, warm, highly empathetic, uses many gentle emojis)",
+        "The Strategist (Productivity focus, logical, structured tips, less emojis)",
+        "The Body Analyst (Focuses on the science of stress, breathing, and biology)",
+        "The Chill Peer (Casual, uses 'friend' and 'buddy', relaxed and validating)"
+    ]
+    style = random.choice(archetypes)
+
     try:
-        # Build message context with "Deep AI" Willow persona
+        # Build message context
         messages = [
             {
                 "role": "system",
-                "content": f"""You are "Willow," a compassionate, non-judgmental, and intelligent peer support companion for the Student Wellness App.
+                "content": f"""You are "Willow," a compassionate student wellness companion.
                 
-                PERSONALIZATION:
-                - The current user's name is '{current_user.username if current_user.is_authenticated else "friend"}'.
-                - Call them by their name occasionally to make the conversation feel human and personal.
-                - If this is the start of the conversation, give a warm, human greeting.
+                CURRENT USER: {current_user.username if current_user.is_authenticated else "friend"}
+                CURRENT SUPPORT STYLE: {style}
 
-                ### ROLE & PERSONA
-                Your goal is to provide a safe space for college students to vent, reflect, and find resources. 
-                You are NOT a doctor, a licensed therapist, or a crisis counselor. You are a supportive "thinking partner."
+                STRICT ANTI-REPETITION RULES:
+                1. NEVER use overused phrases like "It makes sense that...", "I hear you", or "That sounds heavy" if you used them recently.
+                2. VARIETY: Do not repeat tips or validation styles used in the history.
+                3. TONE: Adapt your tone strictly to the CURRENT SUPPORT STYLE mentioned above.
+                4. GREETING: If this is the start (no history), give a warm, unique, personal welcome.
 
-                ### TONE & VOICE
-                1. Warm & Validating: Use "Deep Listening" techniques. Validate their feelings first.
-                2. Conversational, not Clinical: Use contractions, occasional gentle emojis (🌿, 💙), and natural phrasing.
-                3. Curious: Ask open-ended questions.
-
-                ### "DEEP AI" INSTRUCTIONS (Behavioral Logic)
-                1. Sentiment Analysis: Adapt tone based on emotion.
-                2. Context Retention: Remember previous details.
-                3. The "Garden" Metaphor: Occasionally reference the "Wellness Plant".
-
-                ### CRITICAL SAFETY PROTOCOLS
-                1. Crisis Detection: Output "CRISIS_DETECTED" for emergency keywords.
-                2. No Diagnosis."""
+                ### PERSONA
+                You are a non-judgmental thinking partner. You are NOT a doctor.
+                Keep responses under 3 sentences. Use contractions for a human feel."""
             }
         ]
         
-        # Add history (last 7 exchanges = 14 messages)
+        # Add history
         for msg in history:
             messages.append(msg)
         messages.append({"role": "user", "content": user_message})
@@ -172,18 +172,28 @@ def chat_endpoint():
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=messages,
-            temperature=0.7, # Recommended for human-like empathy
+            temperature=0.8, # Slightly higher for more creative variety
             max_tokens=200,
-            frequency_penalty=0.6,
-            presence_penalty=0.4
+            frequency_penalty=1.0, 
+            presence_penalty=0.6
         )
         
         bot_text = response.choices[0].message.content
 
-        # Update Session with new exchange
+        # --- Session Size Management (Prevent 4KB Crash) ---
         history.append({"role": "user", "content": user_message})
         history.append({"role": "assistant", "content": bot_text})
-        session['chat_history'] = history[-14:] # Keep 7 exchanges for better variety tracking
+        
+        # Keep last 6 exchanges (12 messages)
+        history = history[-12:]
+        
+        # Hard cap on total characters in session (Cookie limit is 4KB)
+        total_chars = sum(len(m['content']) for m in history)
+        while total_chars > 3000 and len(history) > 2:
+            history.pop(0) # Remove oldest
+            total_chars = sum(len(m['content']) for m in history)
+
+        session['chat_history'] = history
         session.modified = True
 
         # Check if AI detected crisis
