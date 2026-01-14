@@ -232,14 +232,24 @@ def chat_endpoint():
 
     except Exception as e:
         import traceback
-        print(f"\n=== GEMINI ERROR ===")
+        print(f"\n=== OPENAI API ERROR ===")
         print(f"Error: {e}")
         print(f"Traceback: {traceback.format_exc()}")
         print(f"===================\n")
         
+        # Check for specific authentication errors
+        error_msg = str(e)
+        if "api_key" in error_msg.lower() or "auth" in error_msg.lower():
+            return jsonify({
+                "response": "⚠️ **System Error**: I cannot connect to OpenAI. Please check your `OPENAI_API_KEY` in the `.env` file. It might be missing or invalid.",
+                "sentiment": "neutral",
+                "action": "none"
+            })
+            
         # Fallback: Smart keyword-based responses when API is unavailable
         user_lower = user_message.lower()
         
+        # Expanded Fallback Logic
         if any(word in user_lower for word in ['stress', 'stressed', 'overwhelm']):
             fallback_response = "That's completely understandable. Try this right now: Take 3 deep breaths - 4 seconds in, hold for 4, breathe out for 6. This activates your calm response."
             action = "trigger_panic"
@@ -258,8 +268,18 @@ def chat_endpoint():
         elif any(word in user_lower for word in ['fail', 'failure', 'doubt', 'imposter']):
             fallback_response = "Imposter syndrome is common among high-achievers. Quick reminder: You got into this school for a reason. Write down 3 things you did well today."
             action = "none"
+        elif any(word in user_lower for word in ['depression', 'depressed', 'hopeless', 'suffering', 'mental health']):
+            fallback_response = "I hear that you're in a dark place right now, and I want you to know you're not alone. When depression hits, even small steps are victories. Have you eaten or had water today? 💙"
+            action = "none"
         else:
-            fallback_response = "I hear you. That sounds challenging. Would you like to tell me more about what's going on? I'm here to listen and help."
+            # Randomize generic fallback to prevent exact repetition
+            generic_fallbacks = [
+                "I hear you, and I'm listening. Could you tell me a bit more about what's mistakenly on your mind?",
+                "IDK That sounds heavy. I'm here to be a thinking partner if you want to unpack it.",
+                "I'm having trouble connecting to my creative brain right now, but I'm still here. How can I support you best?",
+                "It seems I'm offline, but I want to help. What's the biggest thing bothering you right now?"
+            ]
+            fallback_response = f"{random.choice(generic_fallbacks)} (Note: I am currently in 'Offline Mode' due to a connection error: {str(e)[:50]}...)"
             action = "none"
         
         return jsonify({
