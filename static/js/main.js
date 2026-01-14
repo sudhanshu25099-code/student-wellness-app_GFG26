@@ -302,10 +302,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressText = document.getElementById('progress-text');
     const plantLevel = document.getElementById('plant-level');
     const plantSprite = document.getElementById('plant-sprite');
+    const dropletCountEl = document.getElementById('droplet-count');
+    const waterPlantBtn = document.getElementById('water-plant-btn');
 
     // Load saved progress
     let currentXP = parseInt(localStorage.getItem('wellnessXP') || '0');
     let currentLevel = parseInt(localStorage.getItem('wellnessLevel') || '1');
+    let droplets = parseInt(localStorage.getItem('wellnessDroplets') || '0');
     let completedToday = JSON.parse(localStorage.getItem('completedToday') || '[]');
     const today = new Date().toDateString();
     const lastDate = localStorage.getItem('lastDate') || '';
@@ -332,9 +335,9 @@ document.addEventListener('DOMContentLoaded', () => {
         progressText.textContent = `${currentXP} / ${xpNeeded} XP`;
         plantLevel.textContent = `Lv.${currentLevel}`;
 
-        // Sprite Sheet Logic for 3D Plant
-        // 4 Stages mapped to sprite width of 400%
-        // Translate X: 0% (Seed), -25% (Sprout), -50% (Bush), -75% (Flower)
+        // Update Droplets UI
+        if (dropletCountEl) dropletCountEl.textContent = droplets;
+        if (waterPlantBtn) waterPlantBtn.disabled = droplets <= 0;
 
         let spriteOffset = '0%'; // Default Lv.1
         let statusText = 'Seedling';
@@ -353,7 +356,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (plantSprite) {
             plantSprite.style.transform = `translateX(${spriteOffset})`;
             // Update status text near level
-            plantLevel.nextElementSibling.textContent = statusText;
+            const statusTarget = document.getElementById('plant-stage-name');
+            if (statusTarget) statusTarget.textContent = statusText;
         }
 
         // Level up if enough XP
@@ -364,9 +368,43 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('wellnessXP', currentXP);
 
             // Celebration
-            alert(`🎉 Level Up! Your plant is now Level ${currentLevel}!`);
+            showCelebration();
             updatePlant();
         }
+    }
+
+    function showCelebration() {
+        // Create a simple level up notification
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-10 left-1/2 -translate-x-1/2 z-[300] bg-green-600 text-white px-8 py-4 rounded-3xl shadow-2xl font-bold animate-bounce-in';
+        toast.innerHTML = `🎉 Level Up! Your plant is now Level ${currentLevel}!`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // --- Watering Mechanic ---
+    if (waterPlantBtn) {
+        waterPlantBtn.addEventListener('click', () => {
+            if (droplets > 0) {
+                droplets--;
+                currentXP += 5; // Each watering gives 5 XP
+                localStorage.setItem('wellnessDroplets', droplets);
+                localStorage.setItem('wellnessXP', currentXP);
+
+                // Visual feedback
+                waterPlantBtn.classList.add('animate-ping');
+                setTimeout(() => waterPlantBtn.classList.remove('animate-ping'), 500);
+
+                // Glow effect on plant container
+                const container = plantSprite.closest('div.relative');
+                if (container) {
+                    container.classList.add('ring-4', 'ring-blue-400', 'ring-opacity-50');
+                    setTimeout(() => container.classList.remove('ring-4', 'ring-blue-400', 'ring-opacity-50'), 1000);
+                }
+
+                updatePlant();
+            }
+        });
     }
 
     // Handle task completion
@@ -376,8 +414,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const parentLabel = e.target.parentElement.parentElement;
 
             if (e.target.checked) {
-                // Add XP
-                currentXP += points;
+                // Add Droplets instead of direct XP
+                droplets += points;
                 completedToday.push(e.target.id);
 
                 // Celebration animation
@@ -386,13 +424,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     parentLabel.classList.remove('ring-2', 'ring-brand-400', 'scale-105');
                 }, 300);
             } else {
-                // Remove XP
-                currentXP -= points;
+                // Remove Droplets
+                droplets = Math.max(0, droplets - points);
                 completedToday = completedToday.filter(id => id !== e.target.id);
             }
 
             // Save progress
-            localStorage.setItem('wellnessXP', currentXP);
+            localStorage.setItem('wellnessDroplets', droplets);
             localStorage.setItem('completedToday', JSON.stringify(completedToday));
 
             updatePlant();

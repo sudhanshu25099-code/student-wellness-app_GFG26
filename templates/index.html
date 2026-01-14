@@ -209,24 +209,56 @@
                             <div class="mb-6">
                                 <h3
                                     class="text-3xl font-bold text-slate-800 flex items-center gap-3 justify-center md:justify-start">
-                                    <span class="text-4xl filter drop-shadow-md">🌱</span> Your Growth
+                                    <span class="text-4xl filter drop-shadow-md">🌿</span> Your Mindful Garden
                                 </h3>
-                                <p class="text-slate-500 text-lg mt-1">Nurture yourself to grow your plant</p>
+                                <p class="text-slate-500 text-lg mt-1">A safe space for patient growth</p>
                             </div>
-
+                            3D
                             <div
-                                class="relative bg-gradient-to-b from-blue-50 to-green-50 rounded-[2rem] p-8 w-full max-w-sm h-72 flex items-center justify-center border border-green-100 shadow-inner group-hover:bg-green-50/50 transition-colors">
+                                class="relative bg-gradient-to-b from-[#F5F5DC] to-[#E8F5E9] rounded-[2.5rem] p-10 w-full max-w-sm h-80 flex flex-col items-center justify-center border border-[#8FBC8F]/30 shadow-inner transition-colors overflow-hidden">
+                                <!-- Ambient Breeze Effect (SVG Overlay) -->
+                                <div class="absolute inset-0 opacity-10 pointer-events-none">
+                                    <svg class="w-full h-full animate-[pulse_8s_infinite]" viewBox="0 0 100 100"
+                                        fill="none">
+                                        <path d="M0 50 Q 25 45, 50 50 T 100 50" stroke="#8FBC8F" stroke-width="0.5" />
+                                        <path d="M0 60 Q 25 55, 50 60 T 100 60" stroke="#8FBC8F" stroke-width="0.5" />
+                                    </svg>
+                                </div>
+
                                 <!-- Image Sprite Container -->
-                                <div class="w-56 h-56 overflow-hidden relative">
+                                <div class="w-48 h-48 overflow-hidden relative z-10">
                                     <img id="plant-sprite" src="/static/images/wellness_plant_stages.png"
                                         alt="Wellness Plant"
                                         class="absolute top-0 left-0 max-w-none h-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.34,1.56,0.64,1)] filter drop-shadow-xl"
                                         style="width: 400%; transform: translateX(0%);">
                                 </div>
+
+                                <!-- Terracotta Pot (Visual Representation) -->
                                 <div
-                                    class="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-green-700 shadow-sm border border-green-100">
+                                    class="w-24 h-8 bg-[#E2725B] rounded-b-xl rounded-t-sm shadow-md mt-[-4px] z-20 border-t border-[#f28e7a]">
+                                </div>
+
+                                <div
+                                    class="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-[#4F7942] shadow-sm border border-[#8FBC8F]/20">
                                     <span id="plant-stage-name">Seedling</span>
                                 </div>
+                            </div>
+
+                            <!-- Watering Mechanic UI -->
+                            <div class="mt-6 flex items-center gap-4 w-full max-w-sm">
+                                <div
+                                    class="flex-1 bg-white p-3 rounded-2xl border border-blue-50 flex items-center justify-between shadow-sm">
+                                    <span
+                                        class="text-xs font-bold text-slate-400 uppercase tracking-tighter">Reservoir</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span id="droplet-count" class="text-xl font-black text-blue-500">0</span>
+                                        <span class="text-lg">💧</span>
+                                    </div>
+                                </div>
+                                <button id="water-plant-btn"
+                                    class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:grayscale disabled:pointer-events-none">
+                                    Water Plant
+                                </button>
                             </div>
                         </div>
 
@@ -237,7 +269,7 @@
                                     <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Current
                                         Level</span>
                                     <div id="plant-level"
-                                        class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-teal-500">
+                                        class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#4F7942] to-[#8FBC8F]">
                                         Lv.1</div>
                                 </div>
                                 <div class="text-right">
@@ -249,9 +281,9 @@
 
                             <!-- XP Bar -->
                             <div
-                                class="relative h-6 bg-slate-100 rounded-full overflow-hidden mb-8 shadow-inner border border-slate-200">
+                                class="relative h-6 bg-[#F5F5DC] rounded-full overflow-hidden mb-8 shadow-inner border border-slate-200">
                                 <div id="xp-bar"
-                                    class="absolute top-0 left-0 h-full bg-gradient-to-r from-green-400 to-teal-500 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(52,211,153,0.5)]"
+                                    class="absolute top-0 left-0 h-full bg-gradient-to-r from-[#8FBC8F] to-[#4F7942] transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(79,121,66,0.3)]"
                                     style="width: 0%">
                                     <div class="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]"></div>
                                 </div>
@@ -441,25 +473,33 @@
     </div>
 
     <!-- Sticky Get Help Button -->
-    <button id="get-help-btn" class="fixed bottom-8 right-8 z-[60] group flex items-center gap-3 bg-red-600 text-white px-6 py-4 rounded-full shadow-2xl hover:bg-red-700 hover:scale-105 active:scale-95 transition-all duration-300">
+    <button id="get-help-btn"
+        class="fixed bottom-8 right-8 z-[60] group flex items-center gap-3 bg-red-600 text-white px-6 py-4 rounded-full shadow-2xl hover:bg-red-700 hover:scale-105 active:scale-95 transition-all duration-300">
         <span class="font-bold tracking-wide">Get Help NOW</span>
         <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center animate-pulse">🆘</div>
     </button>
 
     <!-- Triage Modal (Multi-step) -->
-    <div id="triage-modal" class="fixed inset-0 z-[100] bg-slate-900/90 hidden flex items-center justify-center backdrop-blur-md p-4">
-        <div class="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden animate-bounce-in">
-            
+    <div id="triage-modal"
+        class="fixed inset-0 z-[100] bg-slate-900/90 hidden flex items-center justify-center backdrop-blur-md p-4">
+        <div
+            class="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden animate-bounce-in">
+
             <!-- Step 1: Safety Gate -->
             <div id="triage-step-1" class="p-10 text-center">
-                <div class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-8 text-3xl">⚠️</div>
+                <div
+                    class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-8 text-3xl">
+                    ⚠️</div>
                 <h3 class="text-3xl font-bold text-slate-900 mb-4 tracking-tight">Safety Check</h3>
-                <p class="text-lg text-slate-600 mb-10 leading-relaxed">Are you in immediate danger or thinking about hurting yourself right now?</p>
+                <p class="text-lg text-slate-600 mb-10 leading-relaxed">Are you in immediate danger or thinking about
+                    hurting yourself right now?</p>
                 <div class="grid grid-cols-2 gap-4">
-                    <button onclick="handleSafetyResponse(true)" class="py-4 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all shadow-lg hover:shadow-red-500/30">
+                    <button onclick="handleSafetyResponse(true)"
+                        class="py-4 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all shadow-lg hover:shadow-red-500/30">
                         YES, I need help
                     </button>
-                    <button onclick="handleSafetyResponse(false)" class="py-4 bg-slate-100 text-slate-700 font-bold rounded-2xl hover:bg-slate-200 transition-all">
+                    <button onclick="handleSafetyResponse(false)"
+                        class="py-4 bg-slate-100 text-slate-700 font-bold rounded-2xl hover:bg-slate-200 transition-all">
                         NO, I'm safe
                     </button>
                 </div>
@@ -468,17 +508,20 @@
             <!-- Step 2: Counselor Request Form -->
             <div id="triage-step-2" class="p-10 hidden">
                 <div class="flex items-center gap-4 mb-8">
-                    <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-xl">🩺</div>
+                    <div
+                        class="w-12 h-12 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-xl">
+                        🩺</div>
                     <div>
                         <h3 class="text-2xl font-bold text-slate-900 leading-none">Connect with Help</h3>
                         <p class="text-sm text-slate-500 mt-1">Request a call from a campus counselor</p>
                     </div>
                 </div>
-                
+
                 <form id="triage-form" class="space-y-6">
                     <div>
                         <label class="block text-sm font-bold text-slate-700 mb-2">How are you feeling?</label>
-                        <select id="severity" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm">
+                        <select id="severity"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm">
                             <option value="low">Low Support Needed</option>
                             <option value="medium" selected>Feeling Overwhelmed</option>
                             <option value="high">High Stress / Urgent</option>
@@ -486,23 +529,32 @@
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-slate-700 mb-2">Message (Optional)</label>
-                        <textarea id="triage-message" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm" placeholder="Tell us briefly what's going on..."></textarea>
+                        <textarea id="triage-message" rows="3"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm"
+                            placeholder="Tell us briefly what's going on..."></textarea>
                     </div>
                     <div class="flex gap-4">
-                        <button type="button" onclick="closeTriage()" class="flex-1 py-4 text-slate-500 font-bold rounded-2xl hover:bg-slate-50 transition-all">Cancel</button>
-                        <button type="submit" class="flex-[2] py-4 bg-brand-600 text-white font-bold rounded-2xl hover:bg-brand-700 transition-all shadow-lg hover:shadow-brand-500/30">Submit Request</button>
+                        <button type="button" onclick="closeTriage()"
+                            class="flex-1 py-4 text-slate-500 font-bold rounded-2xl hover:bg-slate-50 transition-all">Cancel</button>
+                        <button type="submit"
+                            class="flex-[2] py-4 bg-brand-600 text-white font-bold rounded-2xl hover:bg-brand-700 transition-all shadow-lg hover:shadow-brand-500/30">Submit
+                            Request</button>
                     </div>
                 </form>
             </div>
 
             <!-- Step 3: Success/Follow-up -->
             <div id="triage-step-3" class="p-10 text-center hidden">
-                <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 text-3xl">✅</div>
+                <div
+                    class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 text-3xl">
+                    ✅</div>
                 <h3 class="text-3xl font-bold text-slate-900 mb-4 tracking-tight">Request Sent</h3>
                 <div id="success-feedback" class="text-lg text-slate-600 mb-10 leading-relaxed">
                     We've received your request. A counselor will review it shortly.
                 </div>
-                <button onclick="closeTriage()" class="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all">Return to Home</button>
+                <button onclick="closeTriage()"
+                    class="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all">Return
+                    to Home</button>
             </div>
         </div>
     </div>
