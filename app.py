@@ -241,7 +241,13 @@ def chat_endpoint():
         error_msg = str(e)
         if "api_key" in error_msg.lower() or "auth" in error_msg.lower():
             return jsonify({
-                "response": "⚠️ **System Error**: I cannot connect to OpenAI. Please check your `OPENAI_API_KEY` in the `.env` file. It might be missing or invalid.",
+                "response": "⚠️ **Authentication Error**: The API rejected your key. Please check your `OPENAI_API_KEY` in the `.env` file.",
+                "sentiment": "neutral",
+                "action": "none"
+            })
+        elif "quota" in error_msg.lower() or "429" in error_msg:
+            return jsonify({
+                "response": "⚠️ **Billing Error**: Use of OpenAI API requires credits. **Your free trial has expired or you are out of credits.** Please go to [platform.openai.com/billing](https://platform.openai.com/account/billing/overview) and add $5 to your balance to restore Willow.",
                 "sentiment": "neutral",
                 "action": "none"
             })
