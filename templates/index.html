@@ -213,8 +213,18 @@
                                 </h3>
                                 <p class="text-slate-500 text-lg mt-1">A safe space for patient growth</p>
                             </div>
+                            <!-- Immersive Garden Container -->
                             <div
-                                class="relative bg-gradient-to-b from-[#F5F5DC] to-[#E8F5E9] rounded-[2.5rem] p-10 w-full max-w-sm h-80 flex flex-col items-center justify-center border border-[#8FBC8F]/30 shadow-inner transition-colors overflow-hidden">
+                                class="relative w-full max-w-sm h-96 rounded-[3rem] border border-[#8FBC8F]/30 shadow-2xl transition-all overflow-hidden group">
+                                <!-- Realistic 3D Plant Image (Full Cover) -->
+                                <img id="plant-sprite" src="/static/images/p1.png" alt="Wellness Garden"
+                                    class="absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out group-hover:scale-105">
+
+                                <!-- Overlay Gradient -->
+                                <div
+                                    class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/30 pointer-events-none">
+                                </div>
+
                                 <!-- Ambient Breeze Effect (SVG Overlay) -->
                                 <div class="absolute inset-0 opacity-10 pointer-events-none">
                                     <svg class="w-full h-full animate-[pulse_8s_infinite]" viewBox="0 0 100 100"
@@ -224,15 +234,13 @@
                                     </svg>
                                 </div>
 
-                                <!-- Realistic 3D Plant Image -->
-                                <div class="w-64 h-64 relative z-10 flex items-center justify-center">
-                                    <img id="plant-sprite" src="/static/images/p1.png" alt="Wellness Plant"
-                                        class="max-w-full max-h-full object-contain transition-all duration-1000 ease-in-out filter drop-shadow-2xl">
-                                </div>
-
-                                <div
-                                    class="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-[#4F7942] shadow-sm border border-[#8FBC8F]/20">
-                                    <span id="plant-stage-name">Seedling</span>
+                                <!-- Upper Layer Status Text -->
+                                <div class="absolute top-8 left-0 w-full z-20 px-10">
+                                    <div
+                                        class="backdrop-blur-md bg-white/20 border border-white/30 py-2.5 rounded-2xl shadow-xl text-center">
+                                        <span id="plant-stage-name"
+                                            class="text-white text-sm font-black uppercase tracking-[0.3em] drop-shadow-md">Seedling</span>
+                                    </div>
                                 </div>
                             </div>
 
