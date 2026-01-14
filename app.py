@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 import os
+import datetime
 from openai import OpenAI
 from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
@@ -31,6 +32,16 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+class CounselorRequest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    severity_level = db.Column(db.String(20), nullable=False) # 'low', 'medium', 'high', 'crisis'
+    message = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='pending') # 'pending', 'resolved'
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    
+    user = db.relationship('User', backref=db.backref('requests', lazy=True))
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -207,6 +218,37 @@ If user mentions suicide, self-harm, or severe danger, output "CRISIS_DETECTED" 
 @app.route('/api/resources')
 def get_resources():
     return jsonify(resources)
+
+@app.route('/api/request_help', methods=['POST'])
+@login_required
+def request_help():
+    data = request.json
+    severity = data.get('severity', 'medium')
+    message = data.get('message', '')
+    
+    if not message:
+        return jsonify({"error": "Message is required"}), 400
+        
+    new_request = CounselorRequest(
+        user_id=current_user.id,
+        severity_level=severity,
+        message=message
+    )
+    db.session.add(new_request)
+    db.session.commit()
+    
+    # Simulate "Bridge" logic: Check if after hours (9 AM - 5 PM)
+    now = datetime.datetime.now()
+    if now.hour < 9 or now.hour >= 17:
+        is_after_hours = True
+    else:
+        is_after_hours = False
+        
+    return jsonify({
+        "status": "success",
+        "message": "Your request has been received.",
+        "after_hours": is_after_hours
+    })
 
 if __name__ == '__main__':
     with app.app_context():

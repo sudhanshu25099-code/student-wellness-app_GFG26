@@ -156,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Check for crisis action
             if (data.action === 'trigger_helpline') {
                 helplineModal.classList.remove('hidden');
+                showCrisisBanner(); // Show persistent banner in chat
             } else if (data.action === 'trigger_panic') {
                 startPanicMode();
             }
@@ -224,6 +225,22 @@ document.addEventListener('DOMContentLoaded', () => {
     window.closeModal = () => {
         helplineModal.classList.add('hidden');
     };
+
+    function showCrisisBanner() {
+        const existingBanner = document.getElementById('crisis-banner');
+        if (existingBanner) return; // Don't duplicate
+
+        const banner = document.createElement('div');
+        banner.id = 'crisis-banner';
+        banner.className = 'sticky top-0 z-10 bg-red-600 text-white p-4 text-xs font-bold text-center animate-pulse border-b border-red-500 shadow-lg';
+        banner.innerHTML = `
+            🚨 IMMEDIATE HELP AVAILABLE: 
+            <a href="tel:988" class="underline ml-2">Call 988</a> 
+            or 
+            <button onclick="document.getElementById('get-help-btn').click()" class="underline ml-2">Request Counselor</button>
+        `;
+        chatBox.prepend(banner);
+    }
 
     // --- Panic Mode Logic ---
     const panicOverlay = document.getElementById('panic-overlay');
