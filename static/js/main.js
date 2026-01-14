@@ -150,13 +150,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Personalized Greeting ---
     function sendWelcomeMessage() {
         const username = window.userContext?.username || 'friend';
-        const welcomeText = `Hi ${username}! I'm Willow, your wellness companion. How are you feeling today? 🌿`;
+
+        const greetings = [
+            `Hi ${username}! I'm Willow, your wellness companion. How are you feeling today? 🌿`,
+            `Warm welcome, ${username}! I'm Willow. I've been looking forward to our chat. What's on your mind? 💙`,
+            `Hello ${username}! Willow here. Ready to check in on your garden and your goals today? 🍃`,
+            `Hi there, ${username}! It's Willow. I'm here if you need to vent or just find some peace today. ✨`,
+            `Greetings, ${username}! Willow at your service. How's your energy level today? 🌊`
+        ];
+
+        const welcomeText = greetings[Math.floor(Math.random() * greetings.length)];
 
         // Add message to UI
         setTimeout(() => {
             addMessage(welcomeText, 'bot');
-            // We don't speak the welcome message immediately to avoid startling the user
-            // and because TTS might be disabled by default.
         }, 1000);
     }
 

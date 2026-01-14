@@ -132,14 +132,19 @@ def chat_endpoint():
         session['chat_history'] = []
     history = session['chat_history']
 
-    # --- Archetype Selection (Force Diversity) ---
+    # --- Archetype Selection ---
     archetypes = [
-        "The Nurturer (Soft, warm, highly empathetic, uses many gentle emojis)",
-        "The Strategist (Productivity focus, logical, structured tips, less emojis)",
-        "The Body Analyst (Focuses on the science of stress, breathing, and biology)",
-        "The Chill Peer (Casual, uses 'friend' and 'buddy', relaxed and validating)"
+        "The Nurturer (Soft, warm, highly empathetic, uses gentle emojis)",
+        "The Strategist (Productivity focus, logical, structured tips)",
+        "The Body Analyst (Science of stress, breathing, and biology)",
+        "The Chill Peer (Casual, friendly, uses 'friend', validating)"
     ]
     style = random.choice(archetypes)
+    
+    # Extract last few bot replies to explicitly ban them
+    last_bot_replies = [m['content'][:50] + "..." for m in history if m['role'] == 'assistant'][-3:]
+    last_bot_starts = [m['content'].split()[:3] for m in history if m['role'] == 'assistant'][-3:]
+    banned_starts = ", ".join([" ".join(start) for start in last_bot_starts])
 
     try:
         # Build message context
@@ -150,16 +155,16 @@ def chat_endpoint():
                 
                 CURRENT USER: {current_user.username if current_user.is_authenticated else "friend"}
                 CURRENT SUPPORT STYLE: {style}
-
-                STRICT ANTI-REPETITION RULES:
-                1. NEVER use overused phrases like "It makes sense that...", "I hear you", or "That sounds heavy" if you used them recently.
-                2. VARIETY: Do not repeat tips or validation styles used in the history.
-                3. TONE: Adapt your tone strictly to the CURRENT SUPPORT STYLE mentioned above.
-                4. GREETING: If this is the start (no history), give a warm, unique, personal welcome.
+                
+                CRITICAL VARIETY RULES:
+                1. DO NOT START with any of these phrases you used recently: [{banned_starts}]
+                2. NEVER use overused robotic openers like "I hear you", "It sounds like", or "That sounds challenging". 
+                3. BE PROACTIVE: Instead of just validating, jump straight into a unique, warm perspective or an unexpected wellness tip.
+                4. DYNAMICS: If the user repeats themselves, do NOT repeat your advice. Gently say "We touched on that, let's try a different angle..." and pivot.
 
                 ### PERSONA
                 You are a non-judgmental thinking partner. You are NOT a doctor.
-                Keep responses under 3 sentences. Use contractions for a human feel."""
+                Keep responses under 3 sentences. Be context-aware and emotionally resonant."""
             }
         ]
         
@@ -168,29 +173,27 @@ def chat_endpoint():
             messages.append(msg)
         messages.append({"role": "user", "content": user_message})
 
-        # "Deep AI" configuration
+        # "Deep AI" configuration with jitter
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini", # Upgraded for better variety and intelligence
             messages=messages,
-            temperature=0.8, # Slightly higher for more creative variety
+            temperature=0.85, # Increased for more creative diversity
             max_tokens=200,
-            frequency_penalty=1.0, 
-            presence_penalty=0.6
+            frequency_penalty=1.5, # Aggressive penalty for repeated words
+            presence_penalty=0.8    # High encouragement for new topics
         )
         
         bot_text = response.choices[0].message.content
 
-        # --- Session Size Management (Prevent 4KB Crash) ---
+        # --- Session Size Management ---
         history.append({"role": "user", "content": user_message})
         history.append({"role": "assistant", "content": bot_text})
         
-        # Keep last 6 exchanges (12 messages)
-        history = history[-12:]
+        history = history[-12:] # Keep 6 exchanges
         
-        # Hard cap on total characters in session (Cookie limit is 4KB)
         total_chars = sum(len(m['content']) for m in history)
         while total_chars > 3000 and len(history) > 2:
-            history.pop(0) # Remove oldest
+            history.pop(0)
             total_chars = sum(len(m['content']) for m in history)
 
         session['chat_history'] = history
