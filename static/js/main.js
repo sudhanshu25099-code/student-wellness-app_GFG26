@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
         banner.className = 'sticky top-0 z-10 bg-red-600 text-white p-4 text-xs font-bold text-center animate-pulse border-b border-red-500 shadow-lg';
         banner.innerHTML = `
             🚨 IMMEDIATE HELP AVAILABLE: 
-            <a href="tel:988" class="underline ml-2">Call 988</a> 
+            <a href="tel:01127666806" class="underline ml-2">Call 011-27666806</a> 
             or 
             <button onclick="document.getElementById('get-help-btn').click()" class="underline ml-2">Request Counselor</button>
         `;

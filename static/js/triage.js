@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const getHelpBtn = document.getElementById('get-help-btn');
     const triageModal = document.getElementById('triage-modal');
     const triageForm = document.getElementById('triage-form');
-    
+
     // Step Elements
     const step1 = document.getElementById('triage-step-1');
     const step2 = document.getElementById('triage-step-2');
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.handleSafetyResponse = (inDanger) => {
         if (inDanger) {
             // Step 1: Redirect to crisis resources
-            window.location.href = "tel:988"; 
+            window.location.href = "tel:01127666806";
             // Also show the fallback helpline modal as a backup
             document.getElementById('helpline-modal').classList.remove('hidden');
             closeTriage();
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (triageForm) {
         triageForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const severity = document.getElementById('severity').value;
             const message = document.getElementById('triage-message').value;
 
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     step2.classList.add('hidden');
                     step3.classList.remove('hidden');
-                    
+
                     if (data.after_hours) {
                         successFeedback.innerHTML = `
                             <p class="font-bold text-slate-800">Request Received!</p>
