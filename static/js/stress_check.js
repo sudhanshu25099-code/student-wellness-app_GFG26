@@ -71,6 +71,22 @@ function updateIntensityLabel(val) {
 function confirmIntensity() {
     const intensity = checkState.intensity;
 
+    // Log to backend
+    fetch('/api/log_stress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            level: intensity,
+            source: checkState.source
+        })
+    }).then(res => res.json())
+        .then(data => {
+            console.log("Logged stress:", data);
+            // Refresh graph if it exists
+            if (typeof loadStressGraph === 'function') loadStressGraph();
+        })
+        .catch(err => console.error("Error logging stress:", err));
+
     // ETHICAL GUARDRAIL: If stress >= 8, trigger crisis intervention
     if (intensity >= 8) {
         setStep('crisis');

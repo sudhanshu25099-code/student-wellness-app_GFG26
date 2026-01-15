@@ -59,6 +59,13 @@ class ChatMessage(db.Model):
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
+class StressLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    stress_level = db.Column(db.Integer, nullable=False)
+    source = db.Column(db.String(50), nullable=True)
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -350,6 +357,37 @@ def request_help():
         "message": "Your request has been received.",
         "after_hours": is_after_hours
     })
+
+
+@app.route('/api/log_stress', methods=['POST'])
+@login_required
+def log_stress():
+    data = request.json
+    try:
+        new_log = StressLog(
+            user_id=current_user.id,
+            stress_level=data.get('level'),
+            source=data.get('source')
+        )
+        db.session.add(new_log)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "Stress level logged"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/stress_history', methods=['GET'])
+@login_required
+def get_stress_history():
+    # Get last 7 entries for the user, ordered by time
+    logs = StressLog.query.filter_by(user_id=current_user.id).order_by(StressLog.timestamp.desc()).limit(7).all()
+    # Return reversed (chronological order)
+    data = [{
+        "date": log.timestamp.strftime("%b %d"),
+        "time": log.timestamp.strftime("%H:%M"),
+        "level": log.stress_level,
+        "source": log.source
+    } for log in reversed(logs)]
+    return jsonify(data)
 
 if __name__ == '__main__':
     with app.app_context():
