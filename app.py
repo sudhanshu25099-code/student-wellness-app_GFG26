@@ -194,11 +194,11 @@ def chat_endpoint():
 
         # Flagship Intelligence Call (Groq Llama-3-70b)
         response = client.chat.completions.create(
-            model="llama-3.1-70b-versatile", # Groq's specialized Flagship Model
+            model="llama3-70b-8192", # Stable, standard Groq model ID
             messages=messages,
             temperature=0.9, 
             max_tokens=300,
-            frequency_penalty=0.8, # Slightly lower for Llama optimization
+            frequency_penalty=0.8,
             presence_penalty=0.6, 
             top_p=0.95
         )

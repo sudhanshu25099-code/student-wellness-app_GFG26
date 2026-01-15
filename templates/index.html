@@ -43,8 +43,8 @@
     <script>
         // Global User Context for Willow
         window.userContext = {
-            isAuthenticated: {{ 'true' if current_user.is_authenticated else 'false' }},
-        username: "{{ current_user.username if current_user.is_authenticated else 'friend' }}"
+            isAuthenticated: "{{ 'true' if current_user.is_authenticated else 'false' }}" === "true",
+            username: "{{ current_user.username if current_user.is_authenticated else 'friend' }}"
         };
     </script>
 </head>
