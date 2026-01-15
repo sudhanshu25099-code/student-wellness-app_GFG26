@@ -112,19 +112,8 @@ function routeToSolution(minutes) {
 
     // 2 Minutes -> Instant Panic Mode (Breathing)
     if (minutes === 2) {
-        // Trigger the Panic Mode overlay from main.js/panic.js logic
-        // We can simulate a click on the "Panic Mode" button if it exists, 
-        // or directly call the function if available.
-        // Assuming startPanicMode() is globally available or we can trigger the overlay.
-
-        // Let's assume we can trigger the existing panic overlay directly
-        const panicOverlay = document.getElementById('panic-overlay');
-        if (panicOverlay) {
-            panicOverlay.classList.remove('hidden');
-            // Start breathing logic if not auto-started
-            if (typeof startBreathingAnimation === 'function') {
-                startBreathingAnimation();
-            }
+        if (typeof window.startPanicMode === 'function') {
+            window.startPanicMode();
         }
     }
     // 5 Minutes -> Chat with Willow (Context Injection)
@@ -156,13 +145,9 @@ function routeToSolution(minutes) {
 // Crisis Handlers
 function startPanicModeFromCheck() {
     closeStressCheck();
-    // Trigger main panic mode
-    const panicOverlay = document.getElementById('panic-overlay');
-    if (panicOverlay) {
-        panicOverlay.classList.remove('hidden');
-        if (typeof startBreathingAnimation === 'function') {
-            startBreathingAnimation();
-        }
+    // Trigger main panic mode globally
+    if (typeof window.startPanicMode === 'function') {
+        window.startPanicMode();
     }
 }
 

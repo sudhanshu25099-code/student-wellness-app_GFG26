@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 helplineModal.classList.remove('hidden');
                 showCrisisBanner(); // Show persistent banner in chat
             } else if (data.action === 'trigger_panic') {
-                startPanicMode();
+                window.startPanicMode();
             }
 
             // Add Bot Response
@@ -283,48 +283,53 @@ document.addEventListener('DOMContentLoaded', () => {
         chatBox.prepend(banner);
     }
 
-    // --- Panic Mode Logic ---
+    // --- Panic Mode Logic (Enhanced & Global) ---
     const panicOverlay = document.getElementById('panic-overlay');
     const exitPanic = document.getElementById('exit-panic');
     const breathCircle = document.getElementById('breath-circle');
+    const ripple2 = document.getElementById('ripple-2');
+    const ripple3 = document.getElementById('ripple-3');
     const breathText = document.getElementById('breath-text');
+    let panicInterval = null;
 
-    function startPanicMode() {
+    window.startPanicMode = function () {
         if (!panicOverlay) return;
         panicOverlay.classList.remove('hidden');
-        panicOverlay.classList.remove('opacity-0');
+        setTimeout(() => panicOverlay.classList.add('opacity-100'), 100);
         startBreathingExercise();
-    }
+    };
 
-    function endPanicMode() {
+    window.endPanicMode = function () {
         if (!panicOverlay) return;
-        panicOverlay.classList.add('opacity-0');
+        panicOverlay.classList.remove('opacity-100');
         setTimeout(() => {
             panicOverlay.classList.add('hidden');
-        }, 500);
-    }
+            if (panicInterval) clearTimeout(panicInterval);
+        }, 700);
+    };
 
     function startBreathingExercise() {
         let phase = 0; // 0=inhale, 1=hold, 2=exhale, 3=hold
         const phases = [
-            { duration: 4000, scale: '1.5', text: 'Breathe In (4s)', color: 'bg-blue-400/30' },
-            { duration: 4000, scale: '1.5', text: 'Hold (4s)', color: 'bg-blue-400/50' },
-            { duration: 6000, scale: '1.0', text: 'Breathe Out (6s)', color: 'bg-blue-400/20' },
-            { duration: 2000, scale: '1.0', text: 'Hold (2s)', color: 'bg-blue-400/10' }
+            { duration: 4000, scale: 'scale-[1.6]', ripple2: 'scale-[1.8]', ripple3: 'scale-[2.0]', text: 'Breathe In', opacity: 'opacity-100' },
+            { duration: 4000, scale: 'scale-[1.6]', ripple2: 'scale-[1.8]', ripple3: 'scale-[2.0]', text: 'Hold', opacity: 'opacity-80' },
+            { duration: 6000, scale: 'scale-[1.0]', ripple2: 'scale-[1.0]', ripple3: 'scale-[1.0]', text: 'Breathe Out', opacity: 'opacity-40' },
+            { duration: 2000, scale: 'scale-[1.0]', ripple2: 'scale-[1.0]', ripple3: 'scale-[1.0]', text: 'Hold', opacity: 'opacity-20' }
         ];
 
         function nextPhase() {
-            if (panicOverlay.classList.contains('hidden')) return; // Stop if closed
+            if (panicOverlay.classList.contains('hidden')) return;
 
             const current = phases[phase];
-            breathCircle.style.transform = `scale(${current.scale})`;
-            breathCircle.style.transition = `all ${current.duration}ms ease-in-out`;
+
+            // Apply scales to circles
+            breathCircle.className = `relative w-3/5 h-3/5 rounded-full bg-gradient-to-br from-indigo-400/40 to-blue-400/40 border-2 border-white/30 shadow-[0_0_50px_rgba(129,140,248,0.3)] flex items-center justify-center transition-all duration-[4000ms] ease-in-out ${current.scale} ${current.opacity}`;
+            if (ripple2) ripple2.className = `absolute w-4/5 h-4/5 rounded-full border border-white/10 transition-all duration-[4000ms] ease-in-out ${current.ripple2}`;
+            if (ripple3) ripple3.className = `absolute w-full h-full rounded-full border border-white/5 transition-all duration-[4000ms] ease-in-out ${current.ripple3}`;
+
             breathText.textContent = current.text;
 
-            // Apply color class
-            breathCircle.className = `absolute inset-0 rounded-full border-4 border-blue-300 flex items-center justify-center ${current.color}`;
-
-            setTimeout(() => {
+            panicInterval = setTimeout(() => {
                 phase = (phase + 1) % phases.length;
                 nextPhase();
             }, current.duration);
@@ -334,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (exitPanic) {
-        exitPanic.addEventListener('click', endPanicMode);
+        exitPanic.addEventListener('click', window.endPanicMode);
     }
 
     // --- Wellness Avatar Logic ---
