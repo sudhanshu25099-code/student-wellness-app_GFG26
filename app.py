@@ -57,7 +57,12 @@ def load_user(user_id):
 
 # --- CONFIGURATION ---
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=OPENAI_API_KEY)
+
+# Redirect OpenAI Client to Groq (Free Tier)
+client = OpenAI(
+    api_key=OPENAI_API_KEY,
+    base_url="https://api.groq.com/openai/v1"
+)
 
 # Mental Health Resources Data (Mock Database)
 resources = [
@@ -187,15 +192,15 @@ def chat_endpoint():
             messages.append(msg)
         messages.append({"role": "user", "content": user_message})
 
-        # Flagship Intelligence Call
+        # Flagship Intelligence Call (Groq Llama-3-70b)
         response = client.chat.completions.create(
-            model="gpt-4o", # THE FLAGSHIP MODEL (Real ChatGPT Experience)
+            model="llama-3.1-70b-versatile", # Groq's specialized Flagship Model
             messages=messages,
-            temperature=1.0, # High temperature for true organic variety
+            temperature=0.9, 
             max_tokens=300,
-            frequency_penalty=1.2, 
-            presence_penalty=1.0, 
-            top_p=0.9
+            frequency_penalty=0.8, # Slightly lower for Llama optimization
+            presence_penalty=0.6, 
+            top_p=0.95
         )
         
         bot_text = response.choices[0].message.content
@@ -219,7 +224,7 @@ def chat_endpoint():
                 "action": "trigger_helpline"
             })
             
-        # Check for panic/breathing suggestions in AI response
+        # Check for panic
         action = "none"
         if any(phrase in bot_text.lower() for phrase in ["breathe", "breathing", "panic", "calm response"]):
             action = "trigger_panic"
@@ -232,22 +237,22 @@ def chat_endpoint():
 
     except Exception as e:
         import traceback
-        print(f"\n=== OPENAI API ERROR ===")
+        print(f"\n=== GROQ API ERROR ===")
         print(f"Error: {e}")
         print(f"Traceback: {traceback.format_exc()}")
         print(f"===================\n")
         
-        # Check for specific authentication errors
+        # Check for specific errors
         error_msg = str(e)
         if "api_key" in error_msg.lower() or "auth" in error_msg.lower():
             return jsonify({
-                "response": "⚠️ **Authentication Error**: The API rejected your key. Please check your `OPENAI_API_KEY` in the `.env` file.",
+                "response": "⚠️ **Authentication Error**: Groq rejected the key. Check your `.env` file.",
                 "sentiment": "neutral",
                 "action": "none"
             })
-        elif "quota" in error_msg.lower() or "429" in error_msg:
-            return jsonify({
-                "response": "⚠️ **Billing Error**: Use of OpenAI API requires credits. **Your free trial has expired or you are out of credits.** Please go to [platform.openai.com/billing](https://platform.openai.com/account/billing/overview) and add $5 to your balance to restore Willow.",
+        elif "rate limit" in error_msg.lower() or "429" in error_msg:
+             return jsonify({
+                "response": "⚠️ **Rate Limit**: Groq is experiencing high traffic. Please wait 1 minute and try again.",
                 "sentiment": "neutral",
                 "action": "none"
             })
