@@ -9,7 +9,15 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Load environment variables
-load_dotenv()
+dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+load_dotenv(dotenv_path)
+
+print(f"DEBUG: Loaded .env from {dotenv_path}")
+key = os.getenv("OPENAI_API_KEY")
+if key:
+    print(f"DEBUG: API Key loaded successfully: {key[:8]}...")
+else:
+    print("DEBUG: API KEY NOT FOUND!")
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-123')
@@ -192,9 +200,10 @@ def chat_endpoint():
             messages.append(msg)
         messages.append({"role": "user", "content": user_message})
 
-        # Flagship Intelligence Call (Groq Llama-3-70b)
+        # Flagship Intelligence Call (Groq Llama 3.3 70B)
+        # Using the latest supported Versatile model
         response = client.chat.completions.create(
-            model="llama3-70b-8192", # Stable, standard Groq model ID
+            model="llama-3.3-70b-versatile", 
             messages=messages,
             temperature=0.9, 
             max_tokens=300,
@@ -237,7 +246,9 @@ def chat_endpoint():
 
     except Exception as e:
         import traceback
-        print(f"\n=== GROQ API ERROR ===")
+        import random
+        v_code = 999 # Final Version verification
+        print(f"\n=== GROQ API ERROR (Ver: {v_code}) ===")
         print(f"Error: {e}")
         print(f"Traceback: {traceback.format_exc()}")
         print(f"===================\n")
@@ -246,13 +257,19 @@ def chat_endpoint():
         error_msg = str(e)
         if "api_key" in error_msg.lower() or "auth" in error_msg.lower():
             return jsonify({
-                "response": "⚠️ **Authentication Error**: Groq rejected the key. Check your `.env` file.",
+                "response": f"⚠️ **Authentication Error (v{v_code})**: Groq rejected the key. Check your `.env` file.",
                 "sentiment": "neutral",
                 "action": "none"
             })
         elif "rate limit" in error_msg.lower() or "429" in error_msg:
              return jsonify({
-                "response": "⚠️ **Rate Limit**: Groq is experiencing high traffic. Please wait 1 minute and try again.",
+                "response": f"⚠️ **Rate Limit (v{v_code})**: Groq is experiencing high traffic. Please wait 1 minute.",
+                "sentiment": "neutral",
+                "action": "none"
+            })
+        else:
+             return jsonify({
+                "response": f"⚠️ **Connection Error (v{v_code})**: Something went wrong. Exact error: `{error_msg}`",
                 "sentiment": "neutral",
                 "action": "none"
             })
