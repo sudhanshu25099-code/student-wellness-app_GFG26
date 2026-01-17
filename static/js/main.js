@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderResources(resources) {
         resourceGrid.innerHTML = resources.map(resource => `
-            <a href="${resource.url}" class="group bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <a href="${resource.url}" target="_blank" class="group bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                 <div class="flex items-center justify-between mb-4">
                     <span class="px-3 py-1 rounded-full text-xs font-semibold bg-brand-50 text-brand-600 border border-brand-100">
                         ${resource.category}

@@ -261,6 +261,7 @@
                     </div>
                     <!-- Graph Container -->
                     <div class="relative h-72 w-full">
+                        {% if current_user.is_authenticated %}
                         <canvas id="stressChart"></canvas>
                         <!-- No Data Feedback -->
                         <div id="no-data-msg"
@@ -272,6 +273,16 @@
                             <p class="text-xs text-slate-400 mt-1">Take a 30-second check-in above to start tracking!
                             </p>
                         </div>
+                        {% else %}
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                            <div
+                                class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-3xl mb-4 text-slate-300">
+                                🔒</div>
+                            <p class="text-slate-500 font-medium">Login to view your graph</p>
+                            <a href="/login" class="mt-4 text-brand-600 font-bold hover:underline">Sign In Now
+                                &rarr;</a>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

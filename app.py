@@ -81,10 +81,10 @@ client = OpenAI(
 
 # Mental Health Resources Data (Mock Database)
 resources = [
-    {"id": 1, "title": "5-Minute Box Breathing", "type": "video", "category": "Anxiety", "url": "#"},
-    {"id": 2, "title": "Understanding Burnout", "type": "article", "category": "Stress", "url": "#"},
-    {"id": 3, "title": "Sleep Hygiene 101", "type": "audio", "category": "Sleep", "url": "#"},
-    {"id": 4, "title": "Grounding Techniques", "type": "video", "category": "Panic", "url": "#"},
+    {"id": 1, "title": "5-Minute Box Breathing", "type": "video", "category": "Anxiety", "url": "https://www.youtube.com/watch?v=tEmt1Znux58"},
+    {"id": 2, "title": "Understanding Burnout", "type": "article", "category": "Stress", "url": "https://www.helpguide.org/articles/stress/burnout-prevention-and-recovery.htm"},
+    {"id": 3, "title": "6-Step Sleep Hygiene", "type": "audio", "category": "Sleep", "url": "https://www.youtube.com/watch?v=fk-_SwHhLLc"},
+    {"id": 4, "title": "5-4-3-2-1 Grounding", "type": "video", "category": "Panic", "url": "https://www.youtube.com/watch?v=30VMIEmA114"},
 ]
 
 @app.route('/login', methods=['GET', 'POST'])
