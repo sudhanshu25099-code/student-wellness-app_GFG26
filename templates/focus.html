@@ -1,199 +1,112 @@
-<!-- Pomodoro Focus Zone -->
-<!DOCTYPE html>
-<html lang="en">
+{% extends "layout.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Focus Zone - MindSpace</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
-                    colors: {
-                        brand: {
-                            50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9',
-                            600: '#0284c7', 900: '#0c4a6e'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-</head>
+{% block title %}Focus Zone - MindSpace{% endblock %}
 
-<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+{% block content %}
+<div class="container mx-auto px-6 pt-28 pb-12 max-w-6xl">
+    <div class="text-center mb-12">
+        <h1 class="text-5xl font-bold text-slate-900 dark:text-white mb-4">Focus Zone 🎯</h1>
+        <p class="text-lg text-slate-600 dark:text-slate-300">Use the Pomodoro Technique to boost productivity and
+            reduce stress</p>
+    </div>
 
-    <!-- Navigation -->
-    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="/"
-                class="text-2xl font-bold bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent">MindSpace</a>
+    <div class="grid lg:grid-cols-2 gap-8">
+        <!-- Timer Section -->
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 border border-gray-100 dark:border-slate-700">
+            <div class="text-center">
+                <div id="session-label"
+                    class="text-sm font-semibold text-brand-600 dark:text-brand-400 uppercase tracking-wide mb-4">
+                    Work Session</div>
 
-            <!-- Desktop Menu -->
-            <div class="hidden md:flex items-center space-x-8">
-                <a href="/#home" class="text-sm font-medium hover:text-brand-600 transition-colors">Home</a>
-                <a href="/focus" class="text-sm font-medium hover:text-brand-600 transition-colors">Focus Zone</a>
-                <a href="/tools" class="text-sm font-medium hover:text-brand-600 transition-colors">Tools</a>
-                <a href="/matrix" class="text-sm font-medium hover:text-brand-600 transition-colors">Task Scheduler</a>
-                {% if current_user.is_authenticated %}
-                <span class="text-sm text-gray-500 italic">Hi, {{ current_user.username }}</span>
-                <a href="/logout"
-                    class="bg-red-50 text-red-600 px-4 py-2 rounded-full text-sm font-bold border border-red-100 hover:bg-red-100 transition-all">Logout</a>
-                {% else %}
-                <a href="/login" class="text-sm font-medium hover:text-brand-600 transition-colors">Login</a>
-                <a href="/signup"
-                    class="bg-brand-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-brand-700 transition-all shadow-lg hover:shadow-brand-500/30">Sign
-                    Up</a>
-                {% endif %}
-            </div>
-
-            <!-- Mobile Menu Button -->
-            <button class="md:hidden text-slate-600 hover:text-brand-600 focus:outline-none"
-                onclick="toggleMobileMenu()">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
-                    </path>
-                </svg>
-            </button>
-        </div>
-
-        <!-- Mobile Menu Dropdown -->
-        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 animate-fade-in-down">
-            <div class="px-6 py-4 space-y-3 flex flex-col">
-                <a href="/#home"
-                    class="text-sm font-medium text-slate-700 hover:text-brand-600 transition-colors">Home</a>
-                <a href="/focus" class="text-sm font-medium text-slate-700 hover:text-brand-600 transition-colors">Focus
-                    Zone</a>
-                <a href="/tools"
-                    class="text-sm font-medium text-slate-700 hover:text-brand-600 transition-colors">Tools</a>
-                <a href="/matrix" class="text-sm font-medium text-slate-700 hover:text-brand-600 transition-colors">Task
-                    Scheduler</a>
-                {% if current_user.is_authenticated %}
-                <span class="text-sm text-gray-500 italic pt-2 border-t border-gray-100">Hi, {{ current_user.username
-                    }}</span>
-                <a href="/logout" class="text-sm font-bold text-red-600 hover:text-red-700">Logout</a>
-                {% else %}
-                <a href="/login" class="text-sm font-medium text-brand-600">Login</a>
-                <a href="/signup" class="text-sm font-bold text-brand-600">Sign Up</a>
-                {% endif %}
-            </div>
-        </div>
-    </nav>
-    <script>
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('hidden');
-        }
-    </script>
-
-    <div class="container mx-auto px-6 pt-28 pb-12 max-w-6xl">
-        <div class="text-center mb-12">
-            <h1 class="text-5xl font-bold text-slate-900 mb-4">Focus Zone 🎯</h1>
-            <p class="text-lg text-slate-600">Use the Pomodoro Technique to boost productivity and reduce stress</p>
-        </div>
-
-        <div class="grid lg:grid-cols-2 gap-8">
-            <!-- Timer Section -->
-            <div class="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
-                <div class="text-center">
-                    <div id="session-label" class="text-sm font-semibold text-brand-600 uppercase tracking-wide mb-4">
-                        Work Session</div>
-
-                    <!-- Circular Timer -->
-                    <div class="relative w-64 h-64 mx-auto mb-8">
-                        <svg class="transform -rotate-90 w-64 h-64">
-                            <circle cx="128" cy="128" r="120" stroke="#e5e7eb" stroke-width="8" fill="none" />
-                            <circle id="progress-ring" cx="128" cy="128" r="120" stroke="#0ea5e9" stroke-width="8"
-                                fill="none" stroke-dasharray="754" stroke-dashoffset="0"
-                                class="transition-all duration-1000" />
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <div id="timer-display" class="text-6xl font-bold text-slate-900">25:00</div>
-                            <div class="text-sm text-slate-500 mt-2">minutes remaining</div>
-                        </div>
-                    </div>
-
-                    <!-- Controls -->
-                    <div class="flex gap-4 justify-center">
-                        <button id="start-btn"
-                            class="px-8 py-3 bg-brand-600 text-white rounded-full font-semibold hover:bg-brand-700 transition-all shadow-lg hover:shadow-xl">
-                            Start
-                        </button>
-                        <button id="pause-btn"
-                            class="px-8 py-3 bg-slate-200 text-slate-700 rounded-full font-semibold hover:bg-slate-300 transition-all"
-                            disabled>
-                            Pause
-                        </button>
-                        <button id="reset-btn"
-                            class="px-8 py-3 bg-red-100 text-red-600 rounded-full font-semibold hover:bg-red-200 transition-all">
-                            Reset
-                        </button>
-                    </div>
-
-                    <!-- Session Counter -->
-                    <div class="mt-8 p-4 bg-slate-50 rounded-xl">
-                        <div class="text-sm text-slate-600">Sessions Completed Today</div>
-                        <div id="session-count" class="text-3xl font-bold text-brand-600">0</div>
+                <!-- Circular Timer -->
+                <div class="relative w-64 h-64 mx-auto mb-8">
+                    <svg class="transform -rotate-90 w-64 h-64">
+                        <circle cx="128" cy="128" r="120" stroke="#e5e7eb" stroke-width="8" fill="none"
+                            class="dark:stroke-slate-700" />
+                        <circle id="progress-ring" cx="128" cy="128" r="120" stroke="#0ea5e9" stroke-width="8"
+                            fill="none" stroke-dasharray="754" stroke-dashoffset="0"
+                            class="transition-all duration-1000" />
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <div id="timer-display" class="text-6xl font-bold text-slate-900 dark:text-white">25:00</div>
+                        <div class="text-sm text-slate-500 dark:text-slate-400 mt-2">minutes remaining</div>
                     </div>
                 </div>
+
+                <!-- Controls -->
+                <div class="flex gap-4 justify-center">
+                    <button id="start-btn"
+                        class="px-8 py-3 bg-brand-600 text-white rounded-full font-semibold hover:bg-brand-700 transition-all shadow-lg hover:shadow-xl">
+                        Start
+                    </button>
+                    <button id="pause-btn"
+                        class="px-8 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 transition-all"
+                        disabled>
+                        Pause
+                    </button>
+                    <button id="reset-btn"
+                        class="px-8 py-3 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full font-semibold hover:bg-red-200 dark:hover:bg-red-900/50 transition-all">
+                        Reset
+                    </button>
+                </div>
+
+                <!-- Session Counter -->
+                <div class="mt-8 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
+                    <div class="text-sm text-slate-600 dark:text-slate-400">Sessions Completed Today</div>
+                    <div id="session-count" class="text-3xl font-bold text-brand-600 dark:text-brand-400">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lo-Fi Music Player -->
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 border border-gray-100 dark:border-slate-700">
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-4">🎧 Focus Music</h3>
+            <p class="text-slate-600 dark:text-slate-400 mb-6">Curated lo-fi beats to help you concentrate</p>
+
+            <!-- YouTube Embed -->
+            <div class="aspect-video rounded-xl overflow-hidden mb-6 bg-black">
+                <iframe id="youtube-player" width="100%" height="100%"
+                    src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=0&loop=1&playlist=jfKfPfyJRdk"
+                    title="Lofi Hip Hop" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+                </iframe>
             </div>
 
-            <!-- Lo-Fi Music Player -->
-            <div class="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
-                <h3 class="text-2xl font-bold text-slate-900 mb-4">🎧 Focus Music</h3>
-                <p class="text-slate-600 mb-6">Curated lo-fi beats to help you concentrate</p>
-
-                <!-- YouTube Embed -->
-                <div class="aspect-video rounded-xl overflow-hidden mb-6">
-                    <iframe id="youtube-player" width="100%" height="100%"
-                        src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=0&loop=1&playlist=jfKfPfyJRdk"
-                        title="Lofi Hip Hop" frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowfullscreen>
-                    </iframe>
-                </div>
-
-                <div class="space-y-3">
-                    <button onclick="changePlaylist('jfKfPfyJRdk')"
-                        class="w-full text-left px-4 py-3 bg-slate-50 hover:bg-brand-50 rounded-xl transition-colors">
-                        <div class="font-semibold text-slate-800">Lofi Hip Hop Radio</div>
-                        <div class="text-xs text-slate-500">Chill beats to study/relax</div>
-                    </button>
-                    <button onclick="changePlaylist('5qap5aO4i9A')"
-                        class="w-full text-left px-4 py-3 bg-slate-50 hover:bg-brand-50 rounded-xl transition-colors">
-                        <div class="font-semibold text-slate-800">Calm Piano</div>
-                        <div class="text-xs text-slate-500">Peaceful instrumental</div>
-                    </button>
-                    <button onclick="changePlaylist('lTRiuFIWV54')"
-                        class="w-full text-left px-4 py-3 bg-slate-50 hover:bg-brand-50 rounded-xl transition-colors">
-                        <div class="font-semibold text-slate-800">Nature Sounds</div>
-                        <div class="text-xs text-slate-500">Rain & forest ambience</div>
-                    </button>
-                </div>
+            <div class="space-y-3">
+                <button onclick="changePlaylist('jfKfPfyJRdk')"
+                    class="w-full text-left px-4 py-3 bg-slate-50 dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-xl transition-colors">
+                    <div class="font-semibold text-slate-800 dark:text-white">Lofi Hip Hop Radio</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">Chill beats to study/relax</div>
+                </button>
+                <button onclick="changePlaylist('5qap5aO4i9A')"
+                    class="w-full text-left px-4 py-3 bg-slate-50 dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-xl transition-colors">
+                    <div class="font-semibold text-slate-800 dark:text-white">Calm Piano</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">Peaceful instrumental</div>
+                </button>
+                <button onclick="changePlaylist('lTRiuFIWV54')"
+                    class="w-full text-left px-4 py-3 bg-slate-50 dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-xl transition-colors">
+                    <div class="font-semibold text-slate-800 dark:text-white">Nature Sounds</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">Rain & forest ambience</div>
+                </button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Break Modal -->
-    <div id="break-modal"
-        class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-3xl p-12 max-w-md mx-4 text-center">
-            <div class="text-6xl mb-4">🌟</div>
-            <h2 class="text-3xl font-bold text-slate-900 mb-4">Time for a Break!</h2>
-            <p id="break-prompt" class="text-lg text-slate-600 mb-8"></p>
-            <button onclick="closeBreakModal()"
-                class="px-8 py-3 bg-brand-600 text-white rounded-full font-semibold hover:bg-brand-700">
-                Got it!
-            </button>
-        </div>
+<!-- Break Modal -->
+<div id="break-modal"
+    class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm hidden flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-12 max-w-md mx-4 text-center">
+        <div class="text-6xl mb-4">🌟</div>
+        <h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Time for a Break!</h2>
+        <p id="break-prompt" class="text-lg text-slate-600 dark:text-slate-300 mb-8"></p>
+        <button onclick="closeBreakModal()"
+            class="px-8 py-3 bg-brand-600 text-white rounded-full font-semibold hover:bg-brand-700">
+            Got it!
+        </button>
     </div>
+</div>
 
-    <script src="{{ url_for('static', filename='js/pomodoro.js') }}"></script>
-</body>
-
-</html>
+<script src="{{ url_for('static', filename='js/pomodoro.js') }}"></script>
+{% endblock %}

@@ -1,842 +1,764 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "layout.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindSpace - Student Wellness</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Outfit', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            500: '#0ea5e9',
-                            600: '#0284c7',
-                            900: '#0c4a6e',
-                        }
-                    },
-                    keyframes: {
-                        shimmer: {
-                            '0%': { transform: 'translateX(-100%)' },
-                            '100%': { transform: 'translateX(100%)' }
-                        }
-                    },
-                    animation: {
-                        shimmer: 'shimmer 2s infinite',
-                    }
-                }
-            }
-        }
-    </script>
-    <script>
-        // Global User Context for Willow
-        window.userContext = {
-            isAuthenticated: "{{ 'true' if current_user.is_authenticated else 'false' }}" === "true",
-            username: "{{ current_user.username if current_user.is_authenticated else 'friend' }}"
-        };
-    </script>
-</head>
+{% block title %}MindSpace - Student Wellness{% endblock %}
 
-<body class="bg-gray-50 text-slate-800 antialiased selection:bg-brand-500 selection:text-white">
+{% block content %}
+<!-- Hero Section -->
+<section id="home"
+    class="relative pt-24 pb-12 lg:pt-32 lg:pb-24 overflow-hidden dark:bg-slate-900 transition-colors duration-300">
+    <div class="container mx-auto px-6 relative z-10">
 
-    <!-- Navigation -->
-    <!-- Navigation -->
-    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="/"
-                class="text-2xl font-bold bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent">MindSpace</a>
+        <!-- Top Row: Text (Left) & Chatbot (Right) -->
+        <div class="flex flex-col lg:flex-row items-start justify-between gap-12 lg:gap-8 mb-16">
 
-            <!-- Desktop Menu -->
-            <div class="hidden md:flex items-center space-x-8">
-                <a href="/#home" class="text-sm font-medium hover:text-brand-600 transition-colors">Home</a>
-                <a href="/focus" class="text-sm font-medium hover:text-brand-600 transition-colors">Focus Zone</a>
-                <a href="/tools" class="text-sm font-medium hover:text-brand-600 transition-colors">Tools</a>
-                <a href="/matrix" class="text-sm font-medium hover:text-brand-600 transition-colors">Task Scheduler</a>
-                {% if current_user.is_authenticated %}
-                <span class="text-sm text-gray-500 italic">Hi, {{ current_user.username }}</span>
-                <a href="/logout"
-                    class="bg-red-50 text-red-600 px-4 py-2 rounded-full text-sm font-bold border border-red-100 hover:bg-red-100 transition-all">Logout</a>
-                {% else %}
-                <a href="/login" class="text-sm font-medium hover:text-brand-600 transition-colors">Login</a>
-                <a href="/signup"
-                    class="bg-brand-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-brand-700 transition-all shadow-lg hover:shadow-brand-500/30">Sign
-                    Up</a>
-                {% endif %}
-            </div>
-
-            <!-- Mobile Menu Button -->
-            <button class="md:hidden text-slate-600 hover:text-brand-600 focus:outline-none"
-                onclick="toggleMobileMenu()">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
-                    </path>
-                </svg>
-            </button>
-        </div>
-
-        <!-- Mobile Menu Dropdown -->
-        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 animate-fade-in-down">
-            <div class="px-6 py-4 space-y-3 flex flex-col">
-                <a href="/#home"
-                    class="text-sm font-medium text-slate-700 hover:text-brand-600 transition-colors">Home</a>
-                <a href="/focus" class="text-sm font-medium text-slate-700 hover:text-brand-600 transition-colors">Focus
-                    Zone</a>
-                <a href="/tools"
-                    class="text-sm font-medium text-slate-700 hover:text-brand-600 transition-colors">Tools</a>
-                <a href="/matrix" class="text-sm font-medium text-slate-700 hover:text-brand-600 transition-colors">Task
-                    Scheduler</a>
-                {% if current_user.is_authenticated %}
-                <span class="text-sm text-gray-500 italic pt-2 border-t border-gray-100">Hi, {{ current_user.username
-                    }}</span>
-                <a href="/logout" class="text-sm font-bold text-red-600 hover:text-red-700">Logout</a>
-                {% else %}
-                <a href="/login" class="text-sm font-medium text-brand-600">Login</a>
-                <a href="/signup" class="text-sm font-bold text-brand-600">Sign Up</a>
-                {% endif %}
-            </div>
-        </div>
-    </nav>
-
-    <script>
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('hidden');
-        }
-    </script>
-
-    <!-- Hero Section -->
-    <section id="home" class="relative pt-24 pb-12 lg:pt-32 lg:pb-24 overflow-hidden">
-        <div class="container mx-auto px-6 relative z-10">
-
-            <!-- Top Row: Text (Left) & Chatbot (Right) -->
-            <div class="flex flex-col lg:flex-row items-start justify-between gap-12 lg:gap-8 mb-16">
-
-                <!-- Left: Hero Text -->
-                <div class="lg:w-5/12 text-left pt-4">
-                    <div
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 text-brand-600 text-xs font-bold mb-6 border border-brand-100 shadow-sm hover:scale-105 transition-transform cursor-default">
-                        <span class="relative flex h-2 w-2">
-                            <span
-                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
-                        </span>
-                        AI-Powered Wellness
-                    </div>
-
-                    <h1 class="text-5xl lg:text-7xl font-bold leading-tight mb-6 text-slate-900 tracking-tight">
-                        Your confidential <br>
+            <!-- Left: Hero Text -->
+            <div class="lg:w-5/12 text-left pt-4">
+                <div
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 text-xs font-bold mb-6 border border-brand-100 dark:border-brand-800 shadow-sm hover:scale-105 transition-transform cursor-default">
+                    <span class="relative flex h-2 w-2">
                         <span
-                            class="bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent">wellness
-                            companion.</span>
-                    </h1>
-
-                    <p class="text-lg text-slate-600 mb-8 leading-relaxed max-w-lg">
-                        A judgment-free space to track your mood, find resources, and chat with "Willow" – your 24/7
-                        AI mental health first-aid kit.
-                    </p>
-
-                    <div class="flex flex-col sm:flex-row gap-4 mb-8">
-                        <button onclick="startStressCheck()"
-                            class="px-8 py-4 bg-gradient-to-r from-brand-600 to-purple-600 text-white rounded-full font-bold text-lg shadow-xl shadow-brand-500/30 hover:shadow-2xl hover:scale-105 transition-all flex items-center justify-center gap-3">
-                            <span>⏱️</span>
-                            Start 30-Second Check-in
-                        </button>
-                        <a href="#chat-interface"
-                            class="px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-full font-bold text-lg hover:bg-slate-50 hover:border-brand-200 transition-all flex items-center justify-center gap-2">
-                            <span>💬</span>
-                            Just Talk to Willow
-                        </a>
-                    </div>
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
+                    </span>
+                    AI-Powered Wellness
                 </div>
 
-                <!-- Right: Chat Interface (Student Buddy) -->
-                <div id="chat-interface" class="lg:w-5/12 w-full">
+                <h1
+                    class="text-5xl lg:text-7xl font-bold leading-tight mb-6 text-slate-900 dark:text-white tracking-tight">
+                    Your confidential <br>
+                    <span class="bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent">wellness
+                        companion.</span>
+                </h1>
+
+                <p class="text-lg text-slate-600 dark:text-slate-300 mb-8 leading-relaxed max-w-lg">
+                    A judgment-free space to track your mood, find resources, and chat with "Willow" – your 24/7
+                    AI mental health first-aid kit.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-4 mb-8">
+                    <button onclick="startStressCheck()"
+                        class="px-8 py-4 bg-gradient-to-r from-brand-600 to-purple-600 text-white rounded-full font-bold text-lg shadow-xl shadow-brand-500/30 hover:shadow-2xl hover:scale-105 transition-all flex items-center justify-center gap-3">
+                        <span>⏱️</span>
+                        Start 30-Second Check-in
+                    </button>
+                    <a href="#chat-interface"
+                        class="px-8 py-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-full font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-brand-200 transition-all flex items-center justify-center gap-2">
+                        <span>💬</span>
+                        Just Talk to Willow
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right: Chat Interface (Student Buddy) -->
+            <div id="chat-interface" class="lg:w-5/12 w-full">
+                <div
+                    class="relative bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl shadow-blue-900/10 dark:shadow-black/30 border border-gray-100 dark:border-slate-700 overflow-hidden transform transition-all hover:scale-[1.01] hover:shadow-blue-900/15">
+                    <!-- Chat Header -->
                     <div
-                        class="relative bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/10 border border-gray-100 overflow-hidden transform transition-all hover:scale-[1.01] hover:shadow-blue-900/15">
-                        <!-- Chat Header -->
-                        <div
-                            class="bg-gradient-to-r from-brand-500 to-brand-600 p-6 flex items-center justify-between text-white">
-                            <div class="flex items-center gap-4">
-                                <div
-                                    class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm text-2xl shadow-inner">
-                                    🤖
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-xl tracking-tight">Willow</h3>
-                                    <p class="text-xs text-brand-100 flex items-center gap-1.5 font-medium">
-                                        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> Online Now
-                                    </p>
-                                </div>
+                        class="bg-gradient-to-r from-brand-500 to-brand-600 p-6 flex items-center justify-between text-white">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm text-2xl shadow-inner">
+                                🤖
                             </div>
-                            <button id="speaker-toggle"
-                                class="text-white/80 hover:text-white transition-colors p-2.5 rounded-full hover:bg-white/10 active:bg-white/20">
-                                <svg id="speaker-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6"
-                                    viewBox="0 0 20 20" fill="currentColor">
+                            <div>
+                                <h3 class="font-bold text-xl tracking-tight">Willow</h3>
+                                <p class="text-xs text-brand-100 flex items-center gap-1.5 font-medium">
+                                    <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> Online Now
+                                </p>
+                            </div>
+                        </div>
+                        <button id="speaker-toggle"
+                            class="text-white/80 hover:text-white transition-colors p-2.5 rounded-full hover:bg-white/10 active:bg-white/20">
+                            <svg id="speaker-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6"
+                                viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <svg id="speaker-muted-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden"
+                                viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Chat Messages Area -->
+                    <div id="chat-box"
+                        class="h-96 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-900 space-y-4 scroll-smooth">
+                        <!-- Welcome Message -->
+                        <div class="flex items-start gap-3 animate-fade-in-up">
+                            <div
+                                class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900 text-brand-600 dark:text-brand-300 flex-shrink-0 flex items-center justify-center text-xs shadow-sm">
+                                🤖</div>
+                            <div
+                                class="bg-white dark:bg-slate-800 p-4 rounded-2xl rounded-tl-none shadow-sm text-sm text-slate-700 dark:text-slate-300 max-w-[85%] border border-gray-100 dark:border-slate-700">
+                                Hi there! I'm your wellness buddy. How are you feeling today? You can say things
+                                like "I'm stressed" or "I need to focus".
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="p-4 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700">
+                        <form id="chat-form" class="flex gap-2 relative">
+                            <input type="text" id="user-input" placeholder="Type your message..."
+                                class="flex-1 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-full pl-5 pr-12 py-3.5 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white dark:focus:bg-slate-800 transition-all shadow-inner">
+
+                            <!-- Mic Button -->
+                            <button type="button" id="mic-btn"
+                                class="absolute right-[4rem] top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors p-2 rounded-full hover:bg-brand-50 dark:hover:bg-slate-700 active:bg-brand-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                    fill="currentColor">
                                     <path fill-rule="evenodd"
-                                        d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                <svg id="speaker-muted-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden"
-                                    viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z"
+                                        d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z"
                                         clip-rule="evenodd" />
                                 </svg>
                             </button>
-                        </div>
 
-                        <!-- Chat Messages Area -->
-                        <div id="chat-box" class="h-96 overflow-y-auto p-6 bg-slate-50 space-y-4 scroll-smooth">
-                            <!-- Welcome Message -->
-                            <div class="flex items-start gap-3 animate-fade-in-up">
-                                <div
-                                    class="w-8 h-8 rounded-full bg-brand-100 flex-shrink-0 flex items-center justify-center text-xs shadow-sm">
-                                    🤖</div>
-                                <div
-                                    class="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm text-sm text-slate-700 max-w-[85%] border border-gray-100">
-                                    Hi there! I'm your wellness buddy. How are you feeling today? You can say things
-                                    like "I'm stressed" or "I need to focus".
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Input Area -->
-                        <div class="p-4 bg-white border-t border-gray-100">
-                            <form id="chat-form" class="flex gap-2 relative">
-                                <input type="text" id="user-input" placeholder="Type your message..."
-                                    class="flex-1 bg-gray-50 border border-gray-200 rounded-full pl-5 pr-12 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all shadow-inner">
-
-                                <!-- Mic Button -->
-                                <button type="button" id="mic-btn"
-                                    class="absolute right-[4rem] top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-600 transition-colors p-2 rounded-full hover:bg-brand-50 active:bg-brand-100">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                        fill="currentColor">
-                                        <path fill-rule="evenodd"
-                                            d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                </button>
-
-                                <button type="submit"
-                                    class="bg-brand-600 text-white rounded-full p-3.5 hover:bg-brand-700 transition-all shadow-lg hover:shadow-brand-500/40 active:scale-95 z-10">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                        fill="currentColor">
-                                        <path
-                                            d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                                    </svg>
-                                </button>
-                            </form>
-                        </div>
+                            <button type="submit"
+                                class="bg-brand-600 text-white rounded-full p-3.5 hover:bg-brand-700 transition-all shadow-lg hover:shadow-brand-500/40 active:scale-95 z-10">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path
+                                        d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                                </svg>
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Middle Row: Trend Analysis Card -->
-            <div class="mb-12 animate-fade-in-up" style="animation-delay: 0.1s;">
-                <div
-                    class="bg-white rounded-[2.5rem] p-8 shadow-xl border border-gray-100 hover:shadow-2xl transition-all h-full">
-                    <div class="flex items-center justify-between mb-8">
-                        <div>
-                            <h3 class="text-2xl font-bold text-slate-900">Stress Trends</h3>
-                            <p class="text-sm text-slate-500">Your mental wellness journey over time</p>
-                        </div>
-                        <div
-                            class="px-4 py-1.5 bg-brand-50 text-brand-600 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm border border-brand-100">
-                            Last 7 Entries
-                        </div>
+        <!-- Middle Row: Trend Analysis Card -->
+        <div class="mb-12 animate-fade-in-up" style="animation-delay: 0.1s;">
+            <div
+                class="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl border border-gray-100 dark:border-slate-700 hover:shadow-2xl transition-all h-full">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white">Stress Trends</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Your mental wellness journey over time</p>
                     </div>
-                    <!-- Graph Container -->
-                    <div class="relative h-72 w-full">
-                        {% if current_user.is_authenticated %}
-                        <canvas id="stressChart"></canvas>
-                        <!-- No Data Feedback -->
-                        <div id="no-data-msg"
-                            class="absolute inset-0 flex flex-col items-center justify-center text-center hidden">
-                            <div
-                                class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-3xl mb-4 text-slate-300">
-                                📊</div>
-                            <p class="text-slate-500 font-medium">No stress check-ins yet.</p>
-                            <p class="text-xs text-slate-400 mt-1">Take a 30-second check-in above to start tracking!
+                    <div
+                        class="px-4 py-1.5 bg-brand-50 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm border border-brand-100 dark:border-brand-800">
+                        Last 7 Entries
+                    </div>
+                </div>
+                <!-- Graph Container -->
+                <div class="relative h-72 w-full">
+                    {% if current_user.is_authenticated %}
+                    <canvas id="stressChart"></canvas>
+                    <!-- No Data Feedback -->
+                    <div id="no-data-msg"
+                        class="absolute inset-0 flex flex-col items-center justify-center text-center hidden">
+                        <div
+                            class="w-16 h-16 bg-slate-50 dark:bg-slate-700 rounded-full flex items-center justify-center text-3xl mb-4 text-slate-300">
+                            📊</div>
+                        <p class="text-slate-500 dark:text-slate-400 font-medium">No stress check-ins yet.</p>
+                        <p class="text-xs text-slate-400 mt-1">Take a 30-second check-in above to start tracking!
+                        </p>
+                    </div>
+                    {% else %}
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                        <div
+                            class="w-16 h-16 bg-slate-50 dark:bg-slate-700 rounded-full flex items-center justify-center text-3xl mb-4 text-slate-300">
+                            🔒</div>
+                        <p class="text-slate-500 dark:text-slate-400 font-medium">Login to view your graph</p>
+                        <a href="/login" class="mt-4 text-brand-600 dark:text-brand-400 font-bold hover:underline">Sign
+                            In Now
+                            &rarr;</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle Row: Wellness Plant (Full Width) -->
+        <div class="w-full">
+            <div
+                class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-[3rem] p-10 shadow-2xl border border-white/60 dark:border-slate-600 relative overflow-hidden group hover:shadow-green-100/50 dark:hover:shadow-green-900/30 transition-all duration-700">
+                <!-- Top Gradient Line -->
+                <div
+                    class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-green-400 via-teal-400 to-emerald-500">
+                </div>
+
+                <div class="flex flex-col md:flex-row items-center justify-between gap-10">
+
+                    <!-- Left: Status & 3D Plant -->
+                    <div class="md:w-1/3 flex flex-col items-center md:items-start text-center md:text-left">
+                        <div class="mb-6">
+                            <h3
+                                class="text-3xl font-bold text-slate-800 dark:text-white flex items-center gap-3 justify-center md:justify-start">
+                                Your Mindful Garden
+                            </h3>
+                            <p class="text-slate-500 dark:text-slate-400 text-lg mt-1">A safe space for patient growth
                             </p>
                         </div>
-                        {% else %}
-                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                        <!-- Immersive Garden Container -->
+                        <div
+                            class="relative w-full max-w-sm h-96 rounded-[3rem] border border-[#8FBC8F]/30 shadow-2xl transition-all overflow-hidden group">
+                            <!-- Realistic 3D Plant Image (Full Cover) -->
+                            <img id="plant-sprite" src="/static/images/p1.png" alt="Wellness Garden"
+                                class="absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out group-hover:scale-105">
+
+                            <!-- Overlay Gradient -->
                             <div
-                                class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-3xl mb-4 text-slate-300">
-                                🔒</div>
-                            <p class="text-slate-500 font-medium">Login to view your graph</p>
-                            <a href="/login" class="mt-4 text-brand-600 font-bold hover:underline">Sign In Now
-                                &rarr;</a>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Middle Row: Wellness Plant (Full Width) -->
-            <div class="w-full">
-                <div
-                    class="bg-white/80 backdrop-blur-xl rounded-[3rem] p-10 shadow-2xl border border-white/60 relative overflow-hidden group hover:shadow-green-100/50 transition-all duration-700">
-                    <!-- Top Gradient Line -->
-                    <div
-                        class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-green-400 via-teal-400 to-emerald-500">
-                    </div>
-
-                    <div class="flex flex-col md:flex-row items-center justify-between gap-10">
-
-                        <!-- Left: Status & 3D Plant -->
-                        <div class="md:w-1/3 flex flex-col items-center md:items-start text-center md:text-left">
-                            <div class="mb-6">
-                                <h3
-                                    class="text-3xl font-bold text-slate-800 flex items-center gap-3 justify-center md:justify-start">
-                                    Your Mindful Garden
-                                </h3>
-                                <p class="text-slate-500 text-lg mt-1">A safe space for patient growth</p>
+                                class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/30 pointer-events-none">
                             </div>
-                            <!-- Immersive Garden Container -->
-                            <div
-                                class="relative w-full max-w-sm h-96 rounded-[3rem] border border-[#8FBC8F]/30 shadow-2xl transition-all overflow-hidden group">
-                                <!-- Realistic 3D Plant Image (Full Cover) -->
-                                <img id="plant-sprite" src="/static/images/p1.png" alt="Wellness Garden"
-                                    class="absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out group-hover:scale-105">
 
-                                <!-- Overlay Gradient -->
+                            <!-- Ambient Breeze Effect (SVG Overlay) -->
+                            <div class="absolute inset-0 opacity-10 pointer-events-none">
+                                <svg class="w-full h-full animate-[pulse_8s_infinite]" viewBox="0 0 100 100"
+                                    fill="none">
+                                    <path d="M0 50 Q 25 45, 50 50 T 100 50" stroke="#8FBC8F" stroke-width="0.5" />
+                                    <path d="M0 60 Q 25 55, 50 60 T 100 60" stroke="#8FBC8F" stroke-width="0.5" />
+                                </svg>
+                            </div>
+
+                            <!-- Upper Layer Status Text -->
+                            <div class="absolute top-8 left-0 w-full z-20 px-10">
                                 <div
-                                    class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/30 pointer-events-none">
+                                    class="backdrop-blur-md bg-white/20 border border-white/30 py-2.5 rounded-2xl shadow-xl text-center">
+                                    <span id="plant-stage-name"
+                                        class="text-white text-sm font-black uppercase tracking-[0.3em] drop-shadow-md">Seedling</span>
                                 </div>
+                            </div>
+                        </div>
 
-                                <!-- Ambient Breeze Effect (SVG Overlay) -->
-                                <div class="absolute inset-0 opacity-10 pointer-events-none">
-                                    <svg class="w-full h-full animate-[pulse_8s_infinite]" viewBox="0 0 100 100"
-                                        fill="none">
-                                        <path d="M0 50 Q 25 45, 50 50 T 100 50" stroke="#8FBC8F" stroke-width="0.5" />
-                                        <path d="M0 60 Q 25 55, 50 60 T 100 60" stroke="#8FBC8F" stroke-width="0.5" />
+                        <!-- Watering Mechanic UI -->
+                        <div class="mt-6 flex items-center gap-4 w-full max-w-sm">
+                            <div
+                                class="flex-1 bg-white dark:bg-slate-700 p-3 rounded-2xl border border-blue-50 dark:border-slate-600 flex items-center justify-between shadow-sm">
+                                <span
+                                    class="text-xs font-bold text-slate-400 uppercase tracking-tighter">Reservoir</span>
+                                <div class="flex items-center gap-1.5">
+                                    <span id="droplet-count"
+                                        class="text-xl font-black text-blue-500 dark:text-blue-400">0</span>
+                                    <span class="text-lg">💧</span>
+                                </div>
+                            </div>
+                            <button id="water-plant-btn"
+                                class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:grayscale disabled:pointer-events-none">
+                                Water Plant
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Tasks & Progress -->
+                    <div class="md:w-2/3 w-full">
+                        <div class="flex items-end justify-between mb-6">
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Current
+                                    Level</span>
+                                <div id="plant-level"
+                                    class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#4F7942] to-[#8FBC8F] dark:from-green-400 dark:to-teal-400">
+                                    Lv.1</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">XP
+                                    Progress</div>
+                                <span id="progress-text" class="text-xl font-bold text-slate-700 dark:text-slate-200">0
+                                    / 10 XP</span>
+                            </div>
+                        </div>
+
+                        <!-- XP Bar -->
+                        <div
+                            class="relative h-6 bg-[#F5F5DC] dark:bg-slate-700 rounded-full overflow-hidden mb-8 shadow-inner border border-slate-200 dark:border-slate-600">
+                            <div id="xp-bar"
+                                class="absolute top-0 left-0 h-full bg-gradient-to-r from-[#8FBC8F] to-[#4F7942] transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(79,121,66,0.3)]"
+                                style="width: 0%">
+                                <div class="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]"></div>
+                            </div>
+                        </div>
+
+                        <!-- Grid Checklist -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Sleep -->
+                            <label
+                                class="group/item flex items-center gap-3 p-4 bg-white dark:bg-slate-700 rounded-2xl cursor-pointer border border-slate-100 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-lg hover:shadow-indigo-100/50 dark:hover:shadow-indigo-900/30 transition-all active:scale-[0.98]">
+                                <div class="relative flex items-center justify-center w-7 h-7">
+                                    <input type="checkbox" id="task-sleep"
+                                        class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 dark:border-slate-500 rounded-[6px] checked:bg-indigo-500 checked:border-indigo-500 transition-all"
+                                        data-points="2">
+                                    <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path d="M5 13l4 4L19 7"></path>
                                     </svg>
                                 </div>
-
-                                <!-- Upper Layer Status Text -->
-                                <div class="absolute top-8 left-0 w-full z-20 px-10">
-                                    <div
-                                        class="backdrop-blur-md bg-white/20 border border-white/30 py-2.5 rounded-2xl shadow-xl text-center">
-                                        <span id="plant-stage-name"
-                                            class="text-white text-sm font-black uppercase tracking-[0.3em] drop-shadow-md">Seedling</span>
-                                    </div>
+                                <div class="flex-1">
+                                    <span class="block font-bold text-slate-700 dark:text-slate-200 text-sm">Sleep
+                                        7h+</span>
+                                    <span class="text-[10px] text-slate-400 dark:text-slate-400 font-medium">Rest &
+                                        Repair</span>
                                 </div>
-                            </div>
+                                <span
+                                    class="text-xs font-bold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-1 rounded-lg">+2
+                                    XP</span>
+                            </label>
 
-                            <!-- Watering Mechanic UI -->
-                            <div class="mt-6 flex items-center gap-4 w-full max-w-sm">
-                                <div
-                                    class="flex-1 bg-white p-3 rounded-2xl border border-blue-50 flex items-center justify-between shadow-sm">
+                            <!-- Water -->
+                            <label
+                                class="group/item flex items-center gap-3 p-4 bg-white dark:bg-slate-700 rounded-2xl cursor-pointer border border-slate-100 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-lg hover:shadow-blue-100/50 dark:hover:shadow-blue-900/30 transition-all active:scale-[0.98]">
+                                <div class="relative flex items-center justify-center w-7 h-7">
+                                    <input type="checkbox" id="task-water"
+                                        class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 dark:border-slate-500 rounded-[6px] checked:bg-blue-500 checked:border-blue-500 transition-all"
+                                        data-points="1">
+                                    <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <span class="block font-bold text-slate-700 dark:text-slate-200 text-sm">Drink
+                                        Water</span>
                                     <span
-                                        class="text-xs font-bold text-slate-400 uppercase tracking-tighter">Reservoir</span>
-                                    <div class="flex items-center gap-1.5">
-                                        <span id="droplet-count" class="text-xl font-black text-blue-500">0</span>
-                                        <span class="text-lg">💧</span>
-                                    </div>
+                                        class="text-[10px] text-slate-400 dark:text-slate-400 font-medium">Hydrate</span>
                                 </div>
-                                <button id="water-plant-btn"
-                                    class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:grayscale disabled:pointer-events-none">
-                                    Water Plant
-                                </button>
-                            </div>
-                        </div>
+                                <span
+                                    class="text-xs font-bold text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-lg">+1
+                                    XP</span>
+                            </label>
 
-                        <!-- Right: Tasks & Progress -->
-                        <div class="md:w-2/3 w-full">
-                            <div class="flex items-end justify-between mb-6">
-                                <div>
-                                    <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Current
-                                        Level</span>
-                                    <div id="plant-level"
-                                        class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#4F7942] to-[#8FBC8F]">
-                                        Lv.1</div>
+                            <!-- Exercise -->
+                            <label
+                                class="group/item flex items-center gap-3 p-4 bg-white dark:bg-slate-700 rounded-2xl cursor-pointer border border-slate-100 dark:border-slate-600 hover:border-orange-300 dark:hover:border-orange-500 hover:shadow-lg hover:shadow-orange-100/50 dark:hover:shadow-orange-900/30 transition-all active:scale-[0.98]">
+                                <div class="relative flex items-center justify-center w-7 h-7">
+                                    <input type="checkbox" id="task-exercise"
+                                        class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 dark:border-slate-500 rounded-[6px] checked:bg-orange-500 checked:border-orange-500 transition-all"
+                                        data-points="2">
+                                    <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path d="M5 13l4 4L19 7"></path>
+                                    </svg>
                                 </div>
-                                <div class="text-right">
-                                    <div class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">XP
-                                        Progress</div>
-                                    <span id="progress-text" class="text-xl font-bold text-slate-700">0 / 10 XP</span>
+                                <div class="flex-1">
+                                    <span class="block font-bold text-slate-700 dark:text-slate-200 text-sm">Active
+                                        20m</span>
+                                    <span class="text-[10px] text-slate-400 dark:text-slate-400 font-medium">Move
+                                        Body</span>
                                 </div>
-                            </div>
+                                <span
+                                    class="text-xs font-bold text-orange-600 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/30 px-2.5 py-1 rounded-lg">+2
+                                    XP</span>
+                            </label>
 
-                            <!-- XP Bar -->
-                            <div
-                                class="relative h-6 bg-[#F5F5DC] rounded-full overflow-hidden mb-8 shadow-inner border border-slate-200">
-                                <div id="xp-bar"
-                                    class="absolute top-0 left-0 h-full bg-gradient-to-r from-[#8FBC8F] to-[#4F7942] transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(79,121,66,0.3)]"
-                                    style="width: 0%">
-                                    <div class="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]"></div>
+                            <!-- Meditate -->
+                            <label
+                                class="group/item flex items-center gap-3 p-4 bg-white dark:bg-slate-700 rounded-2xl cursor-pointer border border-slate-100 dark:border-slate-600 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-lg hover:shadow-purple-100/50 dark:hover:shadow-purple-900/30 transition-all active:scale-[0.98]">
+                                <div class="relative flex items-center justify-center w-7 h-7">
+                                    <input type="checkbox" id="task-meditate"
+                                        class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 dark:border-slate-500 rounded-[6px] checked:bg-purple-500 checked:border-purple-500 transition-all"
+                                        data-points="2">
+                                    <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path d="M5 13l4 4L19 7"></path>
+                                    </svg>
                                 </div>
-                            </div>
-
-                            <!-- Grid Checklist -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <!-- Sleep -->
-                                <label
-                                    class="group/item flex items-center gap-3 p-4 bg-white rounded-2xl cursor-pointer border border-slate-100 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-100/50 transition-all active:scale-[0.98]">
-                                    <div class="relative flex items-center justify-center w-7 h-7">
-                                        <input type="checkbox" id="task-sleep"
-                                            class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 rounded-[6px] checked:bg-indigo-500 checked:border-indigo-500 transition-all"
-                                            data-points="2">
-                                        <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
-                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                    </div>
-                                    <div class="flex-1">
-                                        <span class="block font-bold text-slate-700 text-sm">Sleep 7h+</span>
-                                        <span class="text-[10px] text-slate-400 font-medium">Rest & Repair</span>
-                                    </div>
+                                <div class="flex-1">
                                     <span
-                                        class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">+2
-                                        XP</span>
-                                </label>
+                                        class="block font-bold text-slate-700 dark:text-slate-200 text-sm">Meditate</span>
+                                    <span class="text-[10px] text-slate-400 dark:text-slate-400 font-medium">Clear
+                                        Mind</span>
+                                </div>
+                                <span
+                                    class="text-xs font-bold text-purple-600 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 px-2.5 py-1 rounded-lg">+2
+                                    XP</span>
+                            </label>
 
-                                <!-- Water -->
-                                <label
-                                    class="group/item flex items-center gap-3 p-4 bg-white rounded-2xl cursor-pointer border border-slate-100 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-100/50 transition-all active:scale-[0.98]">
-                                    <div class="relative flex items-center justify-center w-7 h-7">
-                                        <input type="checkbox" id="task-water"
-                                            class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 rounded-[6px] checked:bg-blue-500 checked:border-blue-500 transition-all"
-                                            data-points="1">
-                                        <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
-                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                    </div>
-                                    <div class="flex-1">
-                                        <span class="block font-bold text-slate-700 text-sm">Drink Water</span>
-                                        <span class="text-[10px] text-slate-400 font-medium">Hydrate</span>
-                                    </div>
-                                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">+1
-                                        XP</span>
-                                </label>
+                            <!-- Healthy Meal -->
+                            <label
+                                class="group/item flex items-center gap-3 p-4 bg-white dark:bg-slate-700 rounded-2xl cursor-pointer border border-slate-100 dark:border-slate-600 hover:border-green-300 dark:hover:border-green-500 hover:shadow-lg hover:shadow-green-100/50 dark:hover:shadow-green-900/30 transition-all active:scale-[0.98]">
+                                <div class="relative flex items-center justify-center w-7 h-7">
+                                    <input type="checkbox" id="task-meal"
+                                        class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 dark:border-slate-500 rounded-[6px] checked:bg-green-500 checked:border-green-500 transition-all"
+                                        data-points="2">
+                                    <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <span class="block font-bold text-slate-700 dark:text-slate-200 text-sm">Healthy
+                                        Meal</span>
+                                    <span class="text-[10px] text-slate-400 dark:text-slate-400 font-medium">Fuel
+                                        Up</span>
+                                </div>
+                                <span
+                                    class="text-xs font-bold text-green-600 dark:text-green-300 bg-green-50 dark:bg-green-900/30 px-2.5 py-1 rounded-lg">+2
+                                    XP</span>
+                            </label>
 
-                                <!-- Exercise -->
-                                <label
-                                    class="group/item flex items-center gap-3 p-4 bg-white rounded-2xl cursor-pointer border border-slate-100 hover:border-orange-300 hover:shadow-lg hover:shadow-orange-100/50 transition-all active:scale-[0.98]">
-                                    <div class="relative flex items-center justify-center w-7 h-7">
-                                        <input type="checkbox" id="task-exercise"
-                                            class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 rounded-[6px] checked:bg-orange-500 checked:border-orange-500 transition-all"
-                                            data-points="2">
-                                        <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
-                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                    </div>
-                                    <div class="flex-1">
-                                        <span class="block font-bold text-slate-700 text-sm">Active 20m</span>
-                                        <span class="text-[10px] text-slate-400 font-medium">Move Body</span>
-                                    </div>
+                            <!-- Social -->
+                            <label
+                                class="group/item flex items-center gap-3 p-4 bg-white dark:bg-slate-700 rounded-2xl cursor-pointer border border-slate-100 dark:border-slate-600 hover:border-pink-300 dark:hover:border-pink-500 hover:shadow-lg hover:shadow-pink-100/50 dark:hover:shadow-pink-900/30 transition-all active:scale-[0.98]">
+                                <div class="relative flex items-center justify-center w-7 h-7">
+                                    <input type="checkbox" id="task-social"
+                                        class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 dark:border-slate-500 rounded-[6px] checked:bg-pink-500 checked:border-pink-500 transition-all"
+                                        data-points="1">
+                                    <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
                                     <span
-                                        class="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-lg">+2
-                                        XP</span>
-                                </label>
-
-                                <!-- Meditate -->
-                                <label
-                                    class="group/item flex items-center gap-3 p-4 bg-white rounded-2xl cursor-pointer border border-slate-100 hover:border-purple-300 hover:shadow-lg hover:shadow-purple-100/50 transition-all active:scale-[0.98]">
-                                    <div class="relative flex items-center justify-center w-7 h-7">
-                                        <input type="checkbox" id="task-meditate"
-                                            class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 rounded-[6px] checked:bg-purple-500 checked:border-purple-500 transition-all"
-                                            data-points="2">
-                                        <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
-                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                    </div>
-                                    <div class="flex-1">
-                                        <span class="block font-bold text-slate-700 text-sm">Meditate</span>
-                                        <span class="text-[10px] text-slate-400 font-medium">Clear Mind</span>
-                                    </div>
+                                        class="block font-bold text-slate-700 dark:text-slate-200 text-sm">Connect</span>
                                     <span
-                                        class="text-xs font-bold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-lg">+2
-                                        XP</span>
-                                </label>
-
-                                <!-- Healthy Meal -->
-                                <label
-                                    class="group/item flex items-center gap-3 p-4 bg-white rounded-2xl cursor-pointer border border-slate-100 hover:border-green-300 hover:shadow-lg hover:shadow-green-100/50 transition-all active:scale-[0.98]">
-                                    <div class="relative flex items-center justify-center w-7 h-7">
-                                        <input type="checkbox" id="task-meal"
-                                            class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 rounded-[6px] checked:bg-green-500 checked:border-green-500 transition-all"
-                                            data-points="2">
-                                        <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
-                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                    </div>
-                                    <div class="flex-1">
-                                        <span class="block font-bold text-slate-700 text-sm">Healthy Meal</span>
-                                        <span class="text-[10px] text-slate-400 font-medium">Fuel Up</span>
-                                    </div>
-                                    <span class="text-xs font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-lg">+2
-                                        XP</span>
-                                </label>
-
-                                <!-- Social -->
-                                <label
-                                    class="group/item flex items-center gap-3 p-4 bg-white rounded-2xl cursor-pointer border border-slate-100 hover:border-pink-300 hover:shadow-lg hover:shadow-pink-100/50 transition-all active:scale-[0.98]">
-                                    <div class="relative flex items-center justify-center w-7 h-7">
-                                        <input type="checkbox" id="task-social"
-                                            class="wellness-task peer appearance-none w-6 h-6 border-2 border-slate-300 rounded-[6px] checked:bg-pink-500 checked:border-pink-500 transition-all"
-                                            data-points="1">
-                                        <svg class="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none stroke-2"
-                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                    </div>
-                                    <div class="flex-1">
-                                        <span class="block font-bold text-slate-700 text-sm">Connect</span>
-                                        <span class="text-[10px] text-slate-400 font-medium">Friends</span>
-                                    </div>
-                                    <span class="text-xs font-bold text-pink-600 bg-pink-50 px-2.5 py-1 rounded-lg">+1
-                                        XP</span>
-                                </label>
-                            </div>
+                                        class="text-[10px] text-slate-400 dark:text-slate-400 font-medium">Friends</span>
+                                </div>
+                                <span
+                                    class="text-xs font-bold text-pink-600 dark:text-pink-300 bg-pink-50 dark:bg-pink-900/30 px-2.5 py-1 rounded-lg">+1
+                                    XP</span>
+                            </label>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Beams Background -->
-            <div class="absolute top-0 left-0 w-full h-full z-0 pointer-events-none">
-                <div
-                    class="absolute -top-24 -right-24 w-96 h-96 bg-brand-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob">
-                </div>
-                <div
-                    class="absolute top-48 -left-24 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000">
-                </div>
+        <!-- Beams Background -->
+        <div class="absolute top-0 left-0 w-full h-full z-0 pointer-events-none">
+            <div
+                class="absolute -top-24 -right-24 w-96 h-96 bg-brand-200 dark:bg-brand-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-30 animate-blob">
             </div>
-    </section>
-
-    <!-- Resource Hub -->
-    <section id="resources" class="py-20 bg-white">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-16">
-                <span class="text-brand-600 font-semibold tracking-wide uppercase text-xs">Self-Care Library</span>
-                <h2 class="text-3xl md:text-4xl font-bold mt-2 text-slate-900">Curated Wellness Resources</h2>
-            </div>
-
-            <div id="resource-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <!-- Javascript will load resources here -->
+            <div
+                class="absolute top-48 -left-24 w-72 h-72 bg-purple-200 dark:bg-purple-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-30 animate-blob animation-delay-2000">
             </div>
         </div>
-    </section>
+</section>
 
-    <!-- Helpline Modal (Hidden by default) -->
-    <div id="helpline-modal"
-        class="fixed inset-0 z-[100] bg-slate-900/90 hidden flex items-center justify-center backdrop-blur-sm">
+<!-- Resource Hub -->
+<section id="resources" class="py-20 bg-white dark:bg-slate-800 transition-colors duration-300">
+    <div class="container mx-auto px-6">
+        <div class="text-center mb-16">
+            <span class="text-brand-600 dark:text-brand-400 font-semibold tracking-wide uppercase text-xs">Self-Care
+                Library</span>
+            <h2 class="text-3xl md:text-4xl font-bold mt-2 text-slate-900 dark:text-white">Curated Wellness Resources
+            </h2>
+        </div>
+
+        <div id="resource-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- Javascript will load resources here -->
+        </div>
+    </div>
+</section>
+
+<!-- Helpline Modal (Hidden by default) -->
+<div id="helpline-modal"
+    class="fixed inset-0 z-[100] bg-slate-900/90 hidden flex items-center justify-center backdrop-blur-sm">
+    <div
+        class="bg-white dark:bg-slate-800 w-full max-w-md p-8 rounded-3xl text-center shadow-2xl mx-4 border-t-8 border-red-500 animate-bounce-in">
         <div
-            class="bg-white w-full max-w-md p-8 rounded-3xl text-center shadow-2xl mx-4 border-t-8 border-red-500 animate-bounce-in">
-            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
+            class="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">We're Here for You</h3>
+        <p class="text-gray-600 dark:text-gray-300 mb-8">It sounds like you might be going through a crisis. Please
+            reach out to a
+            professional immediately.</p>
+        <div class="space-y-3">
+            <a href="tel:01127666806"
+                class="block w-full py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg hover:shadow-red-500/40">
+                Call 011-27666806 (Welfare Counselor)
+            </a>
+            <button onclick="closeModal()"
+                class="block w-full py-4 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors">
+                I'm Safe, Close This
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Sticky Get Help Button -->
+<button id="get-help-btn"
+    class="fixed bottom-8 right-8 z-[60] group flex items-center gap-3 bg-red-600 text-white px-6 py-4 rounded-full shadow-2xl hover:bg-red-700 hover:scale-105 active:scale-95 transition-all duration-300">
+    <span class="font-bold tracking-wide">Get Help NOW</span>
+    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center animate-pulse">🆘</div>
+</button>
+
+<!-- Triage Modal (Multi-step) -->
+<div id="triage-modal"
+    class="fixed inset-0 z-[100] bg-slate-900/90 hidden flex items-center justify-center backdrop-blur-md p-4">
+    <div
+        class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-slate-700 overflow-hidden animate-bounce-in">
+
+        <!-- Step 1: Safety Gate -->
+        <div id="triage-step-1" class="p-10 text-center">
+            <div
+                class="w-20 h-20 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-8 text-3xl">
+                ⚠️</div>
+            <h3 class="text-3xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight">Safety Check</h3>
+            <p class="text-lg text-slate-600 dark:text-slate-300 mb-10 leading-relaxed">Are you in immediate danger or
+                thinking about
+                hurting yourself right now?</p>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="handleSafetyResponse(true)"
+                    class="py-4 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all shadow-lg hover:shadow-red-500/30">
+                    YES, I need help
+                </button>
+                <button onclick="handleSafetyResponse(false)"
+                    class="py-4 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-all">
+                    NO, I'm safe
+                </button>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-2">We're Here for You</h3>
-            <p class="text-gray-600 mb-8">It sounds like you might be going through a crisis. Please reach out to a
-                professional immediately.</p>
+        </div>
+
+        <!-- Step 2: Counselor Request Form -->
+        <div id="triage-step-2" class="p-10 hidden">
+            <div class="flex items-center gap-4 mb-8">
+                <div
+                    class="w-12 h-12 bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-full flex items-center justify-center text-xl">
+                    🩺</div>
+                <div>
+                    <h3 class="text-2xl font-bold text-slate-900 dark:text-white leading-none">Connect with Help</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Request a call from a campus counselor
+                    </p>
+                </div>
+            </div>
+
+            <form id="triage-form" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">How are you
+                        feeling?</label>
+                    <select id="severity"
+                        class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm">
+                        <option value="low">Low Support Needed</option>
+                        <option value="medium" selected>Feeling Overwhelmed</option>
+                        <option value="high">High Stress / Urgent</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Message
+                        (Optional)</label>
+                    <textarea id="triage-message" rows="3"
+                        class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm"
+                        placeholder="Tell us briefly what's going on..."></textarea>
+                </div>
+                <div class="flex gap-4">
+                    <button type="button" onclick="closeTriage()"
+                        class="flex-1 py-4 text-slate-500 dark:text-slate-400 font-bold rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">Cancel</button>
+                    <button type="submit"
+                        class="flex-[2] py-4 bg-brand-600 text-white font-bold rounded-2xl hover:bg-brand-700 transition-all shadow-lg hover:shadow-brand-500/30">Submit
+                        Request</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Step 3: Success/Follow-up -->
+        <div id="triage-step-3" class="p-10 text-center hidden">
+            <div
+                class="w-20 h-20 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-8 text-3xl">
+                ✅</div>
+            <h3 class="text-3xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight">Request Sent</h3>
+            <div id="success-feedback" class="text-lg text-slate-600 dark:text-slate-300 mb-10 leading-relaxed">
+                We've received your request. A counselor will review it shortly.
+            </div>
+            <button onclick="closeTriage()"
+                class="w-full py-4 bg-slate-900 dark:bg-slate-700 text-white font-bold rounded-2xl hover:bg-slate-800 dark:hover:bg-slate-600 transition-all">Return
+                to Home</button>
+        </div>
+    </div>
+</div>
+
+<!-- Panic Mode Overlay (Enhanced) -->
+<div id="panic-overlay"
+    class="fixed inset-0 bg-slate-900/40 backdrop-blur-2xl hidden flex items-center justify-center z-[200] opacity-0 transition-opacity duration-700">
+    <!-- Deep Radial Gradient Background -->
+    <div
+        class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-from)_0%,_transparent_70%)] from-indigo-500/20 to-transparent pointer-events-none">
+    </div>
+
+    <div class="text-center max-w-2xl px-6 relative z-10">
+        <h2 class="text-4xl font-bold text-white mb-4 tracking-tight">Just Breathe.</h2>
+        <p class="text-indigo-100/70 mb-16 font-medium">Follow the ripples. You are safe.</p>
+
+        <!-- Impressive Breathing Circles -->
+        <div class="relative w-72 h-72 mx-auto mb-20 flex items-center justify-center">
+            <!-- Ripple 3 (Outer) -->
+            <div id="ripple-3"
+                class="absolute w-full h-full rounded-full border border-white/5 scale-100 transition-all duration-[4000ms] ease-in-out">
+            </div>
+            <!-- Ripple 2 (Middle) -->
+            <div id="ripple-2"
+                class="absolute w-4/5 h-4/5 rounded-full border border-white/10 scale-100 transition-all duration-[4000ms] ease-in-out">
+            </div>
+            <!-- Main Circle -->
+            <div id="breath-circle"
+                class="relative w-3/5 h-3/5 rounded-full bg-gradient-to-br from-indigo-400/40 to-blue-400/40 border-2 border-white/30 shadow-[0_0_50px_rgba(129,140,248,0.3)] flex items-center justify-center transition-all duration-[4000ms] ease-in-out">
+                <div class="absolute inset-0 rounded-full animate-pulse bg-white/5"></div>
+                <span id="breath-text" class="text-xl font-bold text-white drop-shadow-md">Breathe In</span>
+            </div>
+        </div>
+
+        <button id="exit-panic"
+            class="px-10 py-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold transition-all backdrop-blur-md border border-white/20 hover:scale-105 active:scale-95 shadow-xl">
+            I'm feeling grounded
+        </button>
+    </div>
+</div>
+
+<!-- 30-Second Stress Check Modal -->
+<div id="stress-check-modal"
+    class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm hidden z-[100] flex items-center justify-center">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-lg w-full mx-4 shadow-2xl relative overflow-hidden">
+        <!-- Progress Bar -->
+        <div class="absolute top-0 left-0 w-full h-2 bg-slate-100 dark:bg-slate-700">
+            <div id="check-progress"
+                class="h-full bg-gradient-to-r from-brand-500 to-purple-600 w-1/3 transition-all duration-500">
+            </div>
+        </div>
+
+        <button onclick="closeStressCheck()"
+            class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 z-10">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                </path>
+            </svg>
+        </button>
+
+        <!-- Screen 1: Source -->
+        <div id="step-1" class="step-content text-center">
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">What’s stressing you right now?</h3>
+            <p class="text-slate-500 dark:text-slate-400 mb-8">Select one to get personalized help.</p>
+            <div class="grid grid-cols-1 gap-3">
+                <button onclick="selectSource('Exam/Deadline')"
+                    class="p-4 rounded-xl border-2 border-slate-100 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all text-left flex items-center gap-3 group">
+                    <span class="text-2xl group-hover:scale-110 transition-transform">📚</span>
+                    <span
+                        class="font-semibold text-slate-700 dark:text-slate-200 group-hover:text-brand-700 dark:group-hover:text-brand-400">Exam
+                        / Deadline</span>
+                </button>
+                <button onclick="selectSource('Fear of Failure')"
+                    class="p-4 rounded-xl border-2 border-slate-100 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all text-left flex items-center gap-3 group">
+                    <span class="text-2xl group-hover:scale-110 transition-transform">🎯</span>
+                    <span
+                        class="font-semibold text-slate-700 dark:text-slate-200 group-hover:text-brand-700 dark:group-hover:text-brand-400">Fear
+                        of Failure</span>
+                </button>
+                <button onclick="selectSource('Overthinking')"
+                    class="p-4 rounded-xl border-2 border-slate-100 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all text-left flex items-center gap-3 group">
+                    <span class="text-2xl group-hover:scale-110 transition-transform">🌀</span>
+                    <span
+                        class="font-semibold text-slate-700 dark:text-slate-200 group-hover:text-brand-700 dark:group-hover:text-brand-400">Overthinking</span>
+                </button>
+                <button onclick="selectSource('Fatigue/Burnout')"
+                    class="p-4 rounded-xl border-2 border-slate-100 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all text-left flex items-center gap-3 group">
+                    <span class="text-2xl group-hover:scale-110 transition-transform">😴</span>
+                    <span
+                        class="font-semibold text-slate-700 dark:text-slate-200 group-hover:text-brand-700 dark:group-hover:text-brand-400">Fatigue
+                        / Burnout</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Screen 2: Intensity -->
+        <div id="step-2" class="step-content hidden text-center">
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">How intense does it feel?</h3>
+            <p class="text-slate-500 dark:text-slate-400 mb-8">There’s no right answer — just how it feels.</p>
+
+            <div class="mb-8 relative pt-2">
+                <input type="range" id="intensity-slider" min="1" max="10" value="5"
+                    oninput="updateIntensityLabel(this.value)"
+                    class="w-full h-3 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-brand-600">
+                <div class="flex justify-between text-xs text-slate-400 mt-2 font-medium">
+                    <span>Manageable</span>
+                    <span>Intense</span>
+                    <span>Overwhelming</span>
+                </div>
+                <div class="mt-4 text-4xl font-bold text-brand-600 dark:text-brand-400" id="intensity-value">5/10</div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="setStep(1)"
+                    class="w-1/3 py-4 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-all">Back</button>
+                <button onclick="confirmIntensity()"
+                    class="w-2/3 py-4 bg-brand-600 text-white rounded-xl font-bold hover:bg-brand-700 transition-all shadow-lg">Continue</button>
+            </div>
+        </div>
+
+        <!-- Screen 3: Time -->
+        <div id="step-3" class="step-content hidden text-center">
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">How much time do you have?</h3>
+            <p class="text-slate-500 dark:text-slate-400 mb-8">We'll fit the solution to your schedule.</p>
+
             <div class="space-y-3">
+                <button onclick="selectTime(2)"
+                    class="w-full p-4 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 font-bold border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 transition-all flex items-center justify-between group">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-full bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-200 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            ⚡</div>
+                        <span>2 Minutes</span>
+                    </div>
+                    <span
+                        class="text-xs bg-white dark:bg-slate-900 px-2 py-1 rounded-md text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800">Quick
+                        Reset</span>
+                </button>
+                <button onclick="selectTime(5)"
+                    class="w-full p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all flex items-center justify-between group">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-full bg-blue-200 dark:bg-blue-800 text-blue-700 dark:text-blue-200 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            🧘</div>
+                        <span>5 Minutes</span>
+                    </div>
+                    <span
+                        class="text-xs bg-white dark:bg-slate-900 px-2 py-1 rounded-md text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">Guided
+                        Vent</span>
+                </button>
+                <button onclick="selectTime(10)"
+                    class="w-full p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 font-bold border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-all flex items-center justify-between group">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-full bg-purple-200 dark:bg-purple-800 text-purple-700 dark:text-purple-200 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            🧠</div>
+                        <span>10 Minutes</span>
+                    </div>
+                    <span
+                        class="text-xs bg-white dark:bg-slate-900 px-2 py-1 rounded-md text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800">Deep
+                        Focus</span>
+                </button>
+            </div>
+            <button onclick="setStep(2)" class="mt-4 text-sm text-slate-400 hover:text-slate-600">Back</button>
+        </div>
+
+        <!-- Crisis Guardrail Screen -->
+        <div id="step-crisis" class="step-content hidden text-center">
+            <div
+                class="w-20 h-20 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl animate-pulse">
+                ❤️</div>
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">This feels intense.</h3>
+            <p class="text-slate-600 dark:text-slate-300 mb-8 max-w-sm mx-auto">You are not alone. When stress gets this
+                high, the
+                bravest thing to do is pause.</p>
+
+            <div class="space-y-4">
                 <a href="tel:01127666806"
-                    class="block w-full py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg hover:shadow-red-500/40">
-                    Call 011-27666806 (Welfare Counselor)
+                    class="w-full py-4 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 shadow-lg flex items-center justify-center gap-2">
+                    <span>📞</span> Call Student's Welfare Counselor
                 </a>
-                <button onclick="closeModal()"
-                    class="block w-full py-4 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors">
-                    I'm Safe, Close This
+                <button onclick="startPanicModeFromCheck()"
+                    class="w-full py-4 bg-white dark:bg-slate-700 text-slate-700 dark:text-white border-2 border-slate-200 dark:border-slate-600 rounded-xl font-bold hover:border-brand-500 hover:text-brand-600 transition-all flex items-center justify-center gap-2">
+                    <span>🌬️</span> Take a Deep Breath (60s)
                 </button>
             </div>
-        </div>
-    </div>
-
-    <!-- Sticky Get Help Button -->
-    <button id="get-help-btn"
-        class="fixed bottom-8 right-8 z-[60] group flex items-center gap-3 bg-red-600 text-white px-6 py-4 rounded-full shadow-2xl hover:bg-red-700 hover:scale-105 active:scale-95 transition-all duration-300">
-        <span class="font-bold tracking-wide">Get Help NOW</span>
-        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center animate-pulse">🆘</div>
-    </button>
-
-    <!-- Triage Modal (Multi-step) -->
-    <div id="triage-modal"
-        class="fixed inset-0 z-[100] bg-slate-900/90 hidden flex items-center justify-center backdrop-blur-md p-4">
-        <div
-            class="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden animate-bounce-in">
-
-            <!-- Step 1: Safety Gate -->
-            <div id="triage-step-1" class="p-10 text-center">
-                <div
-                    class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-8 text-3xl">
-                    ⚠️</div>
-                <h3 class="text-3xl font-bold text-slate-900 mb-4 tracking-tight">Safety Check</h3>
-                <p class="text-lg text-slate-600 mb-10 leading-relaxed">Are you in immediate danger or thinking about
-                    hurting yourself right now?</p>
-                <div class="grid grid-cols-2 gap-4">
-                    <button onclick="handleSafetyResponse(true)"
-                        class="py-4 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all shadow-lg hover:shadow-red-500/30">
-                        YES, I need help
-                    </button>
-                    <button onclick="handleSafetyResponse(false)"
-                        class="py-4 bg-slate-100 text-slate-700 font-bold rounded-2xl hover:bg-slate-200 transition-all">
-                        NO, I'm safe
-                    </button>
-                </div>
-            </div>
-
-            <!-- Step 2: Counselor Request Form -->
-            <div id="triage-step-2" class="p-10 hidden">
-                <div class="flex items-center gap-4 mb-8">
-                    <div
-                        class="w-12 h-12 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-xl">
-                        🩺</div>
-                    <div>
-                        <h3 class="text-2xl font-bold text-slate-900 leading-none">Connect with Help</h3>
-                        <p class="text-sm text-slate-500 mt-1">Request a call from a campus counselor</p>
-                    </div>
-                </div>
-
-                <form id="triage-form" class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">How are you feeling?</label>
-                        <select id="severity"
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm">
-                            <option value="low">Low Support Needed</option>
-                            <option value="medium" selected>Feeling Overwhelmed</option>
-                            <option value="high">High Stress / Urgent</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Message (Optional)</label>
-                        <textarea id="triage-message" rows="3"
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm"
-                            placeholder="Tell us briefly what's going on..."></textarea>
-                    </div>
-                    <div class="flex gap-4">
-                        <button type="button" onclick="closeTriage()"
-                            class="flex-1 py-4 text-slate-500 font-bold rounded-2xl hover:bg-slate-50 transition-all">Cancel</button>
-                        <button type="submit"
-                            class="flex-[2] py-4 bg-brand-600 text-white font-bold rounded-2xl hover:bg-brand-700 transition-all shadow-lg hover:shadow-brand-500/30">Submit
-                            Request</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Step 3: Success/Follow-up -->
-            <div id="triage-step-3" class="p-10 text-center hidden">
-                <div
-                    class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 text-3xl">
-                    ✅</div>
-                <h3 class="text-3xl font-bold text-slate-900 mb-4 tracking-tight">Request Sent</h3>
-                <div id="success-feedback" class="text-lg text-slate-600 mb-10 leading-relaxed">
-                    We've received your request. A counselor will review it shortly.
-                </div>
-                <button onclick="closeTriage()"
-                    class="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all">Return
-                    to Home</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Panic Mode Overlay (Enhanced) -->
-    <div id="panic-overlay"
-        class="fixed inset-0 bg-slate-900/40 backdrop-blur-2xl hidden flex items-center justify-center z-[200] opacity-0 transition-opacity duration-700">
-        <!-- Deep Radial Gradient Background -->
-        <div
-            class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-from)_0%,_transparent_70%)] from-indigo-500/20 to-transparent pointer-events-none">
-        </div>
-
-        <div class="text-center max-w-2xl px-6 relative z-10">
-            <h2 class="text-4xl font-bold text-white mb-4 tracking-tight">Just Breathe.</h2>
-            <p class="text-indigo-100/70 mb-16 font-medium">Follow the ripples. You are safe.</p>
-
-            <!-- Impressive Breathing Circles -->
-            <div class="relative w-72 h-72 mx-auto mb-20 flex items-center justify-center">
-                <!-- Ripple 3 (Outer) -->
-                <div id="ripple-3"
-                    class="absolute w-full h-full rounded-full border border-white/5 scale-100 transition-all duration-[4000ms] ease-in-out">
-                </div>
-                <!-- Ripple 2 (Middle) -->
-                <div id="ripple-2"
-                    class="absolute w-4/5 h-4/5 rounded-full border border-white/10 scale-100 transition-all duration-[4000ms] ease-in-out">
-                </div>
-                <!-- Main Circle -->
-                <div id="breath-circle"
-                    class="relative w-3/5 h-3/5 rounded-full bg-gradient-to-br from-indigo-400/40 to-blue-400/40 border-2 border-white/30 shadow-[0_0_50px_rgba(129,140,248,0.3)] flex items-center justify-center transition-all duration-[4000ms] ease-in-out">
-                    <div class="absolute inset-0 rounded-full animate-pulse bg-white/5"></div>
-                    <span id="breath-text" class="text-xl font-bold text-white drop-shadow-md">Breathe In</span>
-                </div>
-            </div>
-
-            <button id="exit-panic"
-                class="px-10 py-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold transition-all backdrop-blur-md border border-white/20 hover:scale-105 active:scale-95 shadow-xl">
-                I'm feeling grounded
+            <button onclick="overrideCrisis()" class="mt-6 text-sm text-slate-400 hover:text-slate-600 underline">
+                I'm okay, just stressed. Continue.
             </button>
         </div>
     </div>
+</div>
 
-    <!-- 30-Second Stress Check Modal -->
-    <div id="stress-check-modal"
-        class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm hidden z-[100] flex items-center justify-center">
-        <div class="bg-white rounded-3xl p-8 max-w-lg w-full mx-4 shadow-2xl relative overflow-hidden">
-            <!-- Progress Bar -->
-            <div class="absolute top-0 left-0 w-full h-2 bg-slate-100">
-                <div id="check-progress"
-                    class="h-full bg-gradient-to-r from-brand-500 to-purple-600 w-1/3 transition-all duration-500">
-                </div>
-            </div>
-
-            <button onclick="closeStressCheck()"
-                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                    </path>
-                </svg>
-            </button>
-
-            <!-- Screen 1: Source -->
-            <div id="step-1" class="step-content text-center">
-                <h3 class="text-2xl font-bold text-slate-900 mb-2">What’s stressing you right now?</h3>
-                <p class="text-slate-500 mb-8">Select one to get personalized help.</p>
-                <div class="grid grid-cols-1 gap-3">
-                    <button onclick="selectSource('Exam/Deadline')"
-                        class="p-4 rounded-xl border-2 border-slate-100 hover:border-brand-500 hover:bg-brand-50 transition-all text-left flex items-center gap-3 group">
-                        <span class="text-2xl group-hover:scale-110 transition-transform">📚</span>
-                        <span class="font-semibold text-slate-700 group-hover:text-brand-700">Exam / Deadline</span>
-                    </button>
-                    <button onclick="selectSource('Fear of Failure')"
-                        class="p-4 rounded-xl border-2 border-slate-100 hover:border-brand-500 hover:bg-brand-50 transition-all text-left flex items-center gap-3 group">
-                        <span class="text-2xl group-hover:scale-110 transition-transform">🎯</span>
-                        <span class="font-semibold text-slate-700 group-hover:text-brand-700">Fear of Failure</span>
-                    </button>
-                    <button onclick="selectSource('Overthinking')"
-                        class="p-4 rounded-xl border-2 border-slate-100 hover:border-brand-500 hover:bg-brand-50 transition-all text-left flex items-center gap-3 group">
-                        <span class="text-2xl group-hover:scale-110 transition-transform">🌀</span>
-                        <span class="font-semibold text-slate-700 group-hover:text-brand-700">Overthinking</span>
-                    </button>
-                    <button onclick="selectSource('Fatigue/Burnout')"
-                        class="p-4 rounded-xl border-2 border-slate-100 hover:border-brand-500 hover:bg-brand-50 transition-all text-left flex items-center gap-3 group">
-                        <span class="text-2xl group-hover:scale-110 transition-transform">😴</span>
-                        <span class="font-semibold text-slate-700 group-hover:text-brand-700">Fatigue / Burnout</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Screen 2: Intensity -->
-            <div id="step-2" class="step-content hidden text-center">
-                <h3 class="text-2xl font-bold text-slate-900 mb-2">How intense does it feel?</h3>
-                <p class="text-slate-500 mb-8">There’s no right answer — just how it feels.</p>
-
-                <div class="mb-8 relative pt-2">
-                    <input type="range" id="intensity-slider" min="1" max="10" value="5"
-                        oninput="updateIntensityLabel(this.value)"
-                        class="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-600">
-                    <div class="flex justify-between text-xs text-slate-400 mt-2 font-medium">
-                        <span>Manageable</span>
-                        <span>Intense</span>
-                        <span>Overwhelming</span>
-                    </div>
-                    <div class="mt-4 text-4xl font-bold text-brand-600" id="intensity-value">5/10</div>
-                </div>
-
-                <div class="flex gap-3">
-                    <button onclick="setStep(1)"
-                        class="w-1/3 py-4 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-all">Back</button>
-                    <button onclick="confirmIntensity()"
-                        class="w-2/3 py-4 bg-brand-600 text-white rounded-xl font-bold hover:bg-brand-700 transition-all shadow-lg">Continue</button>
-                </div>
-            </div>
-
-            <!-- Screen 3: Time -->
-            <div id="step-3" class="step-content hidden text-center">
-                <h3 class="text-2xl font-bold text-slate-900 mb-2">How much time do you have?</h3>
-                <p class="text-slate-500 mb-8">We'll fit the solution to your schedule.</p>
-
-                <div class="space-y-3">
-                    <button onclick="selectTime(2)"
-                        class="w-full p-4 rounded-xl bg-green-50 text-green-700 font-bold border border-green-200 hover:bg-green-100 transition-all flex items-center justify-between group">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-10 h-10 rounded-full bg-green-200 text-green-700 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-                                ⚡</div>
-                            <span>2 Minutes</span>
-                        </div>
-                        <span class="text-xs bg-white px-2 py-1 rounded-md text-green-600 border border-green-200">Quick
-                            Reset</span>
-                    </button>
-                    <button onclick="selectTime(5)"
-                        class="w-full p-4 rounded-xl bg-blue-50 text-blue-700 font-bold border border-blue-200 hover:bg-blue-100 transition-all flex items-center justify-between group">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-10 h-10 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-                                🧘</div>
-                            <span>5 Minutes</span>
-                        </div>
-                        <span class="text-xs bg-white px-2 py-1 rounded-md text-blue-600 border border-blue-200">Guided
-                            Vent</span>
-                    </button>
-                    <button onclick="selectTime(10)"
-                        class="w-full p-4 rounded-xl bg-purple-50 text-purple-700 font-bold border border-purple-200 hover:bg-purple-100 transition-all flex items-center justify-between group">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-10 h-10 rounded-full bg-purple-200 text-purple-700 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-                                🧠</div>
-                            <span>10 Minutes</span>
-                        </div>
-                        <span
-                            class="text-xs bg-white px-2 py-1 rounded-md text-purple-600 border border-purple-200">Deep
-                            Focus</span>
-                    </button>
-                </div>
-                <button onclick="setStep(2)" class="mt-4 text-sm text-slate-400 hover:text-slate-600">Back</button>
-            </div>
-
-            <!-- Crisis Guardrail Screen -->
-            <div id="step-crisis" class="step-content hidden text-center">
-                <div
-                    class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl animate-pulse">
-                    ❤️</div>
-                <h3 class="text-2xl font-bold text-slate-900 mb-2">This feels intense.</h3>
-                <p class="text-slate-600 mb-8 max-w-sm mx-auto">You are not alone. When stress gets this high, the
-                    bravest thing to do is pause.</p>
-
-                <div class="space-y-4">
-                    <a href="tel:01127666806"
-                        class="w-full py-4 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 shadow-lg flex items-center justify-center gap-2">
-                        <span>📞</span> Call Student's Welfare Counselor
-                    </a>
-                    <button onclick="startPanicModeFromCheck()"
-                        class="w-full py-4 bg-white text-slate-700 border-2 border-slate-200 rounded-xl font-bold hover:border-brand-500 hover:text-brand-600 flex items-center justify-center gap-2">
-                        <span>🌬️</span> Take a Deep Breath (60s)
-                    </button>
-                </div>
-                <button onclick="overrideCrisis()" class="mt-6 text-sm text-slate-400 hover:text-slate-600 underline">
-                    I'm okay, just stressed. Continue.
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/triage.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/stress_check.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/stress_graph.js') }}"></script>
-</body>
-
-</html>
+<!-- Scripts -->
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/triage.js') }}"></script>
+<script src="{{ url_for('static', filename='js/stress_check.js') }}"></script>
+<script src="{{ url_for('static', filename='js/stress_graph.js') }}"></script>
+{% endblock %}

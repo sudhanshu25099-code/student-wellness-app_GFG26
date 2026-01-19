@@ -1,35 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "layout.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - MindSpace</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+{% block title %}Login - MindSpace{% endblock %}
 
-        .glass {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-        }
-    </style>
-</head>
-
-<body class="bg-gradient-to-br from-indigo-50 via-white to-purple-50 min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-md w-full glass p-8 rounded-3xl shadow-2xl border border-white">
+{% block content %}
+<div
+    class="min-h-screen flex items-center justify-center p-4 pt-24 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300">
+    <div
+        class="max-w-md w-full bg-white/90 dark:bg-slate-800/90 backdrop-blur-md p-8 rounded-3xl shadow-2xl border border-white dark:border-slate-700">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-            <p class="text-gray-600">Enter your credentials to access MindSpace</p>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h1>
+            <p class="text-gray-600 dark:text-gray-400">Enter your credentials to access MindSpace</p>
         </div>
 
         {% with messages = get_flashed_messages() %}
         {% if messages %}
         {% for message in messages %}
-        <div class="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-sm border border-red-100 italic">
+        <div
+            class="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-4 rounded-xl mb-6 text-sm border border-red-100 dark:border-red-900/50 italic">
             {{ message }}
         </div>
         {% endfor %}
@@ -38,33 +25,31 @@
 
         <form action="/login" method="POST" class="space-y-6">
             <div>
-                <label for="username" class="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+                <label for="username"
+                    class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Username</label>
                 <input type="text" id="username" name="username" required
-                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
                     placeholder="Enter your username">
             </div>
             <div>
-                <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                <label for="password"
+                    class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Password</label>
                 <input type="password" id="password" name="password" required
-                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
                     placeholder="••••••••">
             </div>
             <button type="submit"
-                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-0.5">
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all transform hover:-translate-y-0.5">
                 Sign In
             </button>
         </form>
 
         <div class="mt-8 text-center">
-            <p class="text-gray-600 text-sm">
+            <p class="text-gray-600 dark:text-gray-400 text-sm">
                 Don't have an account?
-                <a href="/signup" class="text-indigo-600 font-bold hover:underline">Create one</a>
+                <a href="/signup" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">Create one</a>
             </p>
-            <div class="mt-4">
-                <a href="/" class="text-gray-400 hover:text-gray-600 text-xs transition-colors">← Back to Home</a>
-            </div>
         </div>
     </div>
-</body>
-
-</html>
+</div>
+{% endblock %}

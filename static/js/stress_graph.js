@@ -46,6 +46,14 @@ function renderChart(ctx, labels, dataPoints) {
         stressChartInstance.destroy();
     }
 
+    const isDark = document.documentElement.classList.contains('dark');
+
+    // Theme Colors
+    const gridColor = isDark ? '#334155' : '#f1f5f9'; // slate-700 : slate-100
+    const textColor = isDark ? '#94a3b8' : '#64748b'; // slate-400 : slate-500
+    const tooltipBg = isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)';
+    const tooltipText = isDark ? '#f8fafc' : '#1e293b';
+
     const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
     gradient.addColorStop(0, 'rgba(14, 165, 233, 0.5)'); // Brand Blue
     gradient.addColorStop(1, 'rgba(14, 165, 233, 0.0)'); // Transparent
@@ -61,7 +69,7 @@ function renderChart(ctx, labels, dataPoints) {
                 backgroundColor: gradient,
                 borderWidth: 3,
                 tension: 0.4, // Smooths the curve
-                pointBackgroundColor: '#ffffff',
+                pointBackgroundColor: isDark ? '#1e293b' : '#ffffff',
                 pointBorderColor: '#0284c7',
                 pointBorderWidth: 2,
                 pointRadius: 4,
@@ -77,10 +85,10 @@ function renderChart(ctx, labels, dataPoints) {
                     display: false
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    titleColor: '#1e293b',
-                    bodyColor: '#1e293b',
-                    borderColor: '#e2e8f0',
+                    backgroundColor: tooltipBg,
+                    titleColor: tooltipText,
+                    bodyColor: tooltipText,
+                    borderColor: isDark ? '#475569' : '#e2e8f0',
                     borderWidth: 1,
                     displayColors: false,
                     callbacks: {
@@ -95,10 +103,11 @@ function renderChart(ctx, labels, dataPoints) {
                     beginAtZero: true,
                     max: 10,
                     grid: {
-                        color: '#f1f5f9',
+                        color: gridColor,
                         borderDash: [5, 5]
                     },
                     ticks: {
+                        color: textColor,
                         font: {
                             family: "'Outfit', sans-serif"
                         },
@@ -110,6 +119,7 @@ function renderChart(ctx, labels, dataPoints) {
                         display: false
                     },
                     ticks: {
+                        color: textColor,
                         font: {
                             family: "'Outfit', sans-serif"
                         }
