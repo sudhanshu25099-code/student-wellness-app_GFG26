@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const speakerToggle = document.getElementById('speaker-toggle');
     const speakerIcon = document.getElementById('speaker-icon');
     const speakerMutedIcon = document.getElementById('speaker-muted-icon');
-    let ttsEnabled = false; // Voice responses disabled by default
+    let ttsEnabled = true; // Enabled by default as requested
 
     // Check if SpeechSynthesis is supported
     const ttsSupported = 'speechSynthesis' in window;
@@ -113,6 +113,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // Set initial UI state for speaker
+    if (ttsEnabled && ttsSupported) {
+        speakerIcon.classList.remove('hidden');
+        speakerMutedIcon.classList.add('hidden');
+        speakerToggle.classList.add('text-green-400');
+        speakerToggle.classList.remove('text-white/80');
+    }
 
     // --- Voice Selection Logic (Human Lady Voice) ---
     let selectedVoice = null;
@@ -164,6 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add message to UI
         setTimeout(() => {
             addMessage(welcomeText, 'bot');
+            speakText(welcomeText); // Speak welcome message
         }, 1000);
     }
 
