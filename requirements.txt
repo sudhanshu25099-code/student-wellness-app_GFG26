@@ -2,5 +2,7 @@ flask
 openai
 gunicorn
 python-dotenv
-flask-sqlalchemy
 flask-login
+google-cloud-firestore
+google-auth
+

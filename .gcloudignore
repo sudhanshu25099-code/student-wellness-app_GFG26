@@ -1,0 +1,12 @@
+# .gcloudignore
+.git/
+.gitignore
+.vscode/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+wellness.db
+instance/

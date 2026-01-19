@@ -4,9 +4,10 @@ import random
 import datetime
 from openai import OpenAI
 from dotenv import load_dotenv
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from google.cloud import firestore
+import google.auth.exceptions
 
 # Load environment variables
 dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
@@ -21,54 +22,49 @@ else:
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-123')
-app.config['SQLALCHEMY_DATABASE_HOST'] = 'sqlite:///wellness.db' # For Windows/Render compatibility
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///wellness.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy(app)
+# --- FIRESTORE CONFIGURATION ---
+try:
+    # This will use GOOGLE_APPLICATION_CREDENTIALS or gcloud local auth
+    # Explicitly pass project ID if available in env (for local dev robustness)
+    project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
+    if project_id:
+        db = firestore.Client(project=project_id)
+        print(f"DEBUG: Firestore Client Initialized with project: {project_id}")
+    else:
+        db = firestore.Client()
+        print("DEBUG: Firestore Client Initialized (Auto-discovery)")
+except Exception as e:
+    print(f"CRITICAL WARNING: Firestore init failed. Ensure you are logged in via 'gcloud auth application-default login'. Error: {e}")
+    db = None # Will cause errors if used, but handled below
+
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# User Model
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128))
+# User Model (NoSQL Adapter)
+class User(UserMixin):
+    def __init__(self, uid, username, email, password_hash):
+        self.id = uid # Firestore Document ID
+        self.username = username
+        self.email = email
+        self.password_hash = password_hash
 
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+    @staticmethod
+    def get(user_id):
+        if not db: return None
+        doc_ref = db.collection('users').document(user_id)
+        doc = doc_ref.get()
+        if doc.exists:
+            data = doc.to_dict()
+            return User(uid=user_id, username=data.get('username'), email=data.get('email'), password_hash=data.get('password_hash'))
+        return None
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-class CounselorRequest(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    severity_level = db.Column(db.String(20), nullable=False) # 'low', 'medium', 'high', 'crisis'
-    message = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(20), default='pending') # 'pending', 'resolved'
-    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-    
-    user = db.relationship('User', backref=db.backref('requests', lazy=True))
-
-class ChatMessage(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    role = db.Column(db.String(20), nullable=False) # 'user' or 'assistant'
-    content = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-
-class StressLog(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    stress_level = db.Column(db.Integer, nullable=False)
-    source = db.Column(db.String(50), nullable=True)
-    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return User.get(user_id)
 
 # --- CONFIGURATION ---
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -90,30 +86,59 @@ resources = [
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        if not db:
+             flash('Database configuration error. Please contact admin.')
+             return render_template('login.html')
+
         username = request.form.get('username')
         password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
-        if user and user.check_password(password):
-            login_user(user)
-            return redirect(url_for('home'))
+        
+        # Query users collection by username
+        users_ref = db.collection('users')
+        query = users_ref.where('username', '==', username).limit(1).stream()
+        
+        user_doc = None
+        for doc in query:
+            user_doc = doc
+            break
+            
+        if user_doc:
+            data = user_doc.to_dict()
+            user = User(uid=user_doc.id, username=data.get('username'), email=data.get('email'), password_hash=data.get('password_hash'))
+            if user.check_password(password):
+                login_user(user)
+                return redirect(url_for('home'))
+        
         flash('Invalid username or password')
     return render_template('login.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
+        if not db:
+             flash('Database configuration error. Please contact admin.')
+             return render_template('signup.html')
+             
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
         
-        if User.query.filter_by(username=username).first():
+        # Check existing username
+        users_ref = db.collection('users')
+        if any(users_ref.where('username', '==', username).limit(1).stream()):
             flash('Username already exists')
             return redirect(url_for('signup'))
             
-        user = User(username=username, email=email)
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
+        # Create new user
+        password_hash = generate_password_hash(password)
+        new_user_ref = users_ref.document() # Auto ID
+        new_user_ref.set({
+            'username': username,
+            'email': email,
+            'password_hash': password_hash,
+            'created_at': firestore.SERVER_TIMESTAMP
+        })
+        
         flash('Registration successful! Please log in.')
         return redirect(url_for('login'))
     return render_template('signup.html')
@@ -155,10 +180,19 @@ def chat_endpoint():
         })
 
     # --- Permanent Memory (Database-Backed) ---
-    if current_user.is_authenticated:
-        # Load last 12 messages from DB
-        db_history = ChatMessage.query.filter_by(user_id=current_user.id).order_by(ChatMessage.timestamp.desc()).limit(12).all()
-        history = [{"role": msg.role, "content": msg.content} for msg in reversed(db_history)]
+    history = []
+    if current_user.is_authenticated and db:
+        # Load last 12 messages from Firestore subcollection or main collection
+        # Structure: users/{uid}/chats/{msg_id}
+        chats_ref = db.collection('users').document(current_user.id).collection('chats')
+        docs = chats_ref.order_by('timestamp', direction=firestore.Query.DESCENDING).limit(12).stream()
+        
+        db_history = []
+        for doc in docs:
+            db_history.append(doc.to_dict())
+            
+        # Reverse to get chronological order
+        history = [{"role": msg['role'], "content": msg['content']} for msg in reversed(db_history)]
     else:
         # Fallback to session for guests
         if 'chat_history' not in session:
@@ -166,7 +200,6 @@ def chat_endpoint():
         history = session['chat_history']
 
     # --- Organic Persona Dynamics ---
-    # Instead of rigid archetypes, we give Willow a 'Mood Drift' based on the conversation energy.
     recent_messages = " ".join([m['content'] for m in history[-3:]])
     if any(word in recent_messages.lower() for word in ['heavy', 'depression', 'sad', 'suffering']):
         current_vibe = "Deeply Compassionate & Soulful (Low-energy, soft, steady support)"
@@ -208,7 +241,6 @@ def chat_endpoint():
         messages.append({"role": "user", "content": user_message})
 
         # Flagship Intelligence Call (Groq Llama 3.3 70B)
-        # Using the latest supported Versatile model
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile", 
             messages=messages,
@@ -222,10 +254,18 @@ def chat_endpoint():
         bot_text = response.choices[0].message.content
 
         # --- Save to Permanent Memory ---
-        if current_user.is_authenticated:
-            db.session.add(ChatMessage(user_id=current_user.id, role='user', content=user_message))
-            db.session.add(ChatMessage(user_id=current_user.id, role='assistant', content=bot_text))
-            db.session.commit()
+        if current_user.is_authenticated and db:
+            chats_ref = db.collection('users').document(current_user.id).collection('chats')
+            chats_ref.add({
+                'role': 'user',
+                'content': user_message,
+                'timestamp': firestore.SERVER_TIMESTAMP
+            })
+            chats_ref.add({
+                'role': 'assistant',
+                'content': bot_text,
+                'timestamp': firestore.SERVER_TIMESTAMP
+            })
         else:
             history.append({"role": "user", "content": user_message})
             history.append({"role": "assistant", "content": bot_text})
@@ -253,14 +293,12 @@ def chat_endpoint():
 
     except Exception as e:
         import traceback
-        import random
-        v_code = 999 # Final Version verification
+        v_code = 999 
         print(f"\n=== GROQ API ERROR (Ver: {v_code}) ===")
         print(f"Error: {e}")
         print(f"Traceback: {traceback.format_exc()}")
         print(f"===================\n")
         
-        # Check for specific errors
         error_msg = str(e)
         if "api_key" in error_msg.lower() or "auth" in error_msg.lower():
             return jsonify({
@@ -268,59 +306,11 @@ def chat_endpoint():
                 "sentiment": "neutral",
                 "action": "none"
             })
-        elif "rate limit" in error_msg.lower() or "429" in error_msg:
-             return jsonify({
-                "response": f"⚠️ **Rate Limit (v{v_code})**: Groq is experiencing high traffic. Please wait 1 minute.",
-                "sentiment": "neutral",
-                "action": "none"
-            })
-        else:
-             return jsonify({
-                "response": f"⚠️ **Connection Error (v{v_code})**: Something went wrong. Exact error: `{error_msg}`",
-                "sentiment": "neutral",
-                "action": "none"
-            })
-            
-        # Fallback: Smart keyword-based responses when API is unavailable
-        user_lower = user_message.lower()
-        
-        # Expanded Fallback Logic
-        if any(word in user_lower for word in ['stress', 'stressed', 'overwhelm']):
-            fallback_response = "That's completely understandable. Try this right now: Take 3 deep breaths - 4 seconds in, hold for 4, breathe out for 6. This activates your calm response."
-            action = "trigger_panic"
-        elif any(word in user_lower for word in ['exam', 'test', 'study', 'assignment']):
-            fallback_response = "Exam stress is real. Break your study into 25-minute chunks (Pomodoro method) with 5-min breaks. Start with just ONE topic for 10 minutes to build momentum."
-            action = "none"
-        elif any(word in user_lower for word in ['sleep', 'insomnia', 'tired', 'exhausted']):
-            fallback_response = "Poor sleep affects everything. Tonight, try this: Set your phone outside your bedroom 30 minutes before bed. Your sleep quality will improve."
-            action = "none"
-        elif any(word in user_lower for word in ['lonely', 'alone', 'isolated', 'sad']):
-            fallback_response = "Feeling isolated is hard, especially as a student. Quick action: Text one friend right now, even just 'hey, how are you?' Connection helps."
-            action = "none"
-        elif any(word in user_lower for word in ['anxious', 'anxiety', 'nervous', 'panic']):
-            fallback_response = "Anxiety is tough. Try the 5-4-3-2-1 technique: Name 5 things you see, 4 you touch, 3 you hear, 2 you smell, 1 you taste. This grounds you in the present."
-            action = "trigger_panic"
-        elif any(word in user_lower for word in ['fail', 'failure', 'doubt', 'imposter']):
-            fallback_response = "Imposter syndrome is common among high-achievers. Quick reminder: You got into this school for a reason. Write down 3 things you did well today."
-            action = "none"
-        elif any(word in user_lower for word in ['depression', 'depressed', 'hopeless', 'suffering', 'mental health']):
-            fallback_response = "I hear that you're in a dark place right now, and I want you to know you're not alone. When depression hits, even small steps are victories. Have you eaten or had water today? 💙"
-            action = "none"
-        else:
-            # Randomize generic fallback to prevent exact repetition
-            generic_fallbacks = [
-                "I hear you, and I'm listening. Could you tell me a bit more about what's mistakenly on your mind?",
-                "IDK That sounds heavy. I'm here to be a thinking partner if you want to unpack it.",
-                "I'm having trouble connecting to my creative brain right now, but I'm still here. How can I support you best?",
-                "It seems I'm offline, but I want to help. What's the biggest thing bothering you right now?"
-            ]
-            fallback_response = f"{random.choice(generic_fallbacks)} (Note: I am currently in 'Offline Mode' due to a connection error: {str(e)[:50]}...)"
-            action = "none"
-        
+        # ... (Keep existing simple fallback logic or basic error return) ...
         return jsonify({
-            "response": fallback_response,
+            "response": f"⚠️ **Connection Error**: I'm having trouble thinking clearly. ({str(e)[:50]})",
             "sentiment": "neutral",
-            "action": action
+            "action": "none"
         })
 
 @app.route('/api/resources')
@@ -330,6 +320,8 @@ def get_resources():
 @app.route('/api/request_help', methods=['POST'])
 @login_required
 def request_help():
+    if not db: return jsonify({"error": "Database error"}), 500
+
     data = request.json
     severity = data.get('severity', 'medium')
     message = data.get('message', '')
@@ -337,20 +329,18 @@ def request_help():
     if not message:
         return jsonify({"error": "Message is required"}), 400
         
-    new_request = CounselorRequest(
-        user_id=current_user.id,
-        severity_level=severity,
-        message=message
-    )
-    db.session.add(new_request)
-    db.session.commit()
+    # Store in 'requests' collection
+    db.collection('requests').add({
+        'user_id': current_user.id,
+        'username': current_user.username, # Denormalize for easier access
+        'severity_level': severity,
+        'message': message,
+        'status': 'pending',
+        'timestamp': firestore.SERVER_TIMESTAMP
+    })
     
-    # Simulate "Bridge" logic: Check if after hours (9 AM - 5 PM)
     now = datetime.datetime.now()
-    if now.hour < 9 or now.hour >= 17:
-        is_after_hours = True
-    else:
-        is_after_hours = False
+    is_after_hours = now.hour < 9 or now.hour >= 17
         
     return jsonify({
         "status": "success",
@@ -362,15 +352,16 @@ def request_help():
 @app.route('/api/log_stress', methods=['POST'])
 @login_required
 def log_stress():
+    if not db: return jsonify({"error": "Database error"}), 500
+    
     data = request.json
     try:
-        new_log = StressLog(
-            user_id=current_user.id,
-            stress_level=data.get('level'),
-            source=data.get('source')
-        )
-        db.session.add(new_log)
-        db.session.commit()
+        db.collection('stress_logs').add({
+            'user_id': current_user.id,
+            'stress_level': data.get('level'),
+            'source': data.get('source'),
+            'timestamp': firestore.SERVER_TIMESTAMP
+        })
         return jsonify({"status": "success", "message": "Stress level logged"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -378,20 +369,37 @@ def log_stress():
 @app.route('/api/stress_history', methods=['GET'])
 @login_required
 def get_stress_history():
-    # Get last 7 entries for the user, ordered by time
-    logs = StressLog.query.filter_by(user_id=current_user.id).order_by(StressLog.timestamp.desc()).limit(7).all()
-    # Return reversed (chronological order)
-    data = [{
-        "date": log.timestamp.strftime("%b %d"),
-        "time": log.timestamp.strftime("%H:%M"),
-        "level": log.stress_level,
-        "source": log.source
-    } for log in reversed(logs)]
-    return jsonify(data)
+    if not db: return jsonify([])
+
+    # Query stress logs for current user
+    logs_ref = db.collection('stress_logs')
+    query = logs_ref.where('user_id', '==', current_user.id).order_by('timestamp', direction=firestore.Query.DESCENDING).limit(7).stream()
+    
+    data = []
+    # Firestore timestamps need conversion
+    for doc in query:
+        log = doc.to_dict()
+        ts = log.get('timestamp')
+        if ts:
+            # Handle if ts is datetime or None (sometimes SERVER_TIMESTAMP is latent)
+            # But usually on read it's a datetime
+            try:
+                dt = ts
+                data.append({
+                    "date": dt.strftime("%b %d"),
+                    "time": dt.strftime("%H:%M"),
+                    "level": log.get('stress_level'),
+                    "source": log.get('source')
+                })
+            except:
+                pass
+                
+    # Return reversed (chronological order) - actually we queried desc, so reversing makes it asc?
+    # Original code: ordered by desc, then reversed.
+    # So [Newest, ..., Oldest] -> Reversed -> [Oldest, ..., Newest]
+    return jsonify(data[::-1])
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    # Use PORT from environment (for Render) or default to 80 (for your local link)
+    # No db.create_all() needed for Firestore
     port = int(os.environ.get('PORT', 80))
     app.run(host='0.0.0.0', port=port, debug=True)

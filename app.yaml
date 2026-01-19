@@ -1,0 +1,6 @@
+runtime: python311
+entrypoint: gunicorn -b :$PORT app:app
+
+env_variables:
+  GOOGLE_CLOUD_PROJECT: "ethereal-creek-484805-f2"
+  # OPENAI_API_KEY: "This will be injected by Cloud Build or loaded from .env"

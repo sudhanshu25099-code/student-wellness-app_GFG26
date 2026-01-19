@@ -1,0 +1,9 @@
+steps:
+- name: 'bash'
+  args: ['-c', 'echo "OPENAI_API_KEY=${_OPENAI_API_KEY}" >> .env']
+- name: "gcr.io/cloud-builders/gcloud"
+  args: ["app", "deploy"]
+timeout: "1600s"
+
+# Note: You may need to grant the "App Engine Admin" and "Service Account User" 
+# roles to your Cloud Build Service Account in IAM settings.
