@@ -29,11 +29,11 @@ try:
     # Explicitly pass project ID if available in env (for local dev robustness)
     project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
     if project_id:
-        db = firestore.Client(project=project_id)
-        print(f"DEBUG: Firestore Client Initialized with project: {project_id}")
+        db = firestore.Client(project=project_id, database='student-wellness')
+        print(f"DEBUG: Firestore Client Initialized with project: {project_id} (DB: student-wellness)")
     else:
-        db = firestore.Client()
-        print("DEBUG: Firestore Client Initialized (Auto-discovery)")
+        db = firestore.Client(database='student-wellness')
+        print("DEBUG: Firestore Client Initialized (Auto-discovery, DB: student-wellness)")
 except Exception as e:
     print(f"CRITICAL WARNING: Firestore init failed. Ensure you are logged in via 'gcloud auth application-default login'. Error: {e}")
     db = None # Will cause errors if used, but handled below
