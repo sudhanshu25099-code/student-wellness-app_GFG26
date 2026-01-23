@@ -26,7 +26,7 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-123')
 # --- DATABASE CONFIGURATION (PostgreSQL / SQLite) ---
 # Use DATABASE_URL from environment (Render provides this)
 # Fallback to local SQLite database for development
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///wellness.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///wellness_sql.db')
 if app.config['SQLALCHEMY_DATABASE_URI'].startswith("postgres://"):
     # Fix for Heroku/Render postgres URLs (SQLAlchemy requires postgresql://)
     app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace("postgres://", "postgresql://", 1)

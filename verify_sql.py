@@ -1,11 +1,11 @@
 from app import app, db, User
 import os
 
-print("Verifying SQL Database Setup...")
+print("Verifying SQL Database Setup (v2)...")
 
-# Ensure using a fresh db for test or just rely on verify
-if os.path.exists('wellness.db'):
-    print("Found existing wellness.db")
+if os.path.exists('wellness_sql.db'):
+    print("Deleting old wellness_sql.db...")
+    os.remove('wellness_sql.db')
 
 try:
     with app.app_context():
@@ -18,6 +18,10 @@ try:
             db.session.add(u)
             db.session.commit()
             print("User 'sql_test' created successfully.")
+            
+            # Verify retrieval
+            u_db = User.query.filter_by(username='sql_test').first()
+            print(f"Retrieved user: {u_db.username}, Created At: {u_db.created_at}")
         else:
             print("User 'sql_test' already exists.")
             
