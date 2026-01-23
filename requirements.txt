@@ -3,6 +3,7 @@ openai
 gunicorn
 python-dotenv
 flask-login
-google-cloud-firestore
-google-auth
+flask-sqlalchemy
+flask-migrate
+psycopg2-binary
 

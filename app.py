@@ -6,8 +6,8 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from google.cloud import firestore
-import google.auth.exceptions
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 # Load environment variables
 dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
@@ -23,48 +23,65 @@ else:
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-123')
 
-# --- FIRESTORE CONFIGURATION ---
-try:
-    # This will use GOOGLE_APPLICATION_CREDENTIALS or gcloud local auth
-    # Explicitly pass project ID if available in env (for local dev robustness)
-    project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
-    if project_id:
-        db = firestore.Client(project=project_id, database='student-wellness')
-        print(f"DEBUG: Firestore Client Initialized with project: {project_id} (DB: student-wellness)")
-    else:
-        db = firestore.Client(database='student-wellness')
-        print("DEBUG: Firestore Client Initialized (Auto-discovery, DB: student-wellness)")
-except Exception as e:
-    print(f"CRITICAL WARNING: Firestore init failed. Ensure you are logged in via 'gcloud auth application-default login'. Error: {e}")
-    db = None # Will cause errors if used, but handled below
+# --- DATABASE CONFIGURATION (PostgreSQL / SQLite) ---
+# Use DATABASE_URL from environment (Render provides this)
+# Fallback to local SQLite database for development
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///wellness.db')
+if app.config['SQLALCHEMY_DATABASE_URI'].startswith("postgres://"):
+    # Fix for Heroku/Render postgres URLs (SQLAlchemy requires postgresql://)
+    app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# User Model (NoSQL Adapter)
-class User(UserMixin):
-    def __init__(self, uid, username, email, password_hash):
-        self.id = uid # Firestore Document ID
-        self.username = username
-        self.email = email
-        self.password_hash = password_hash
+# --- MODELS ---
 
-    @staticmethod
-    def get(user_id):
-        if not db: return None
-        doc_ref = db.collection('users').document(user_id)
-        doc = doc_ref.get()
-        if doc.exists:
-            data = doc.to_dict()
-            return User(uid=user_id, username=data.get('username'), email=data.get('email'), password_hash=data.get('password_hash'))
-        return None
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(150), unique=True, nullable=False)
+    email = db.Column(db.String(150), nullable=True)
+    password_hash = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+    # Relationships
+    chats = db.relationship('ChatHistory', backref='user', lazy=True)
+    stress_logs = db.relationship('StressLog', backref='user', lazy=True)
+    requests = db.relationship('HelpRequest', backref='user', lazy=True)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+class ChatHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    role = db.Column(db.String(20), nullable=False) # 'user' or 'assistant'
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+class StressLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    stress_level = db.Column(db.Integer, nullable=False)
+    source = db.Column(db.String(100), nullable=True)
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+class HelpRequest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    severity = db.Column(db.String(20), default='medium')
+    message = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='pending')
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+
 @login_manager.user_loader
 def load_user(user_id):
-    return User.get(user_id)
+    return User.query.get(int(user_id))
 
 # --- CONFIGURATION ---
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -86,28 +103,14 @@ resources = [
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        if not db:
-             flash('Database configuration error. Please contact admin.')
-             return render_template('login.html')
-
         username = request.form.get('username')
         password = request.form.get('password')
         
-        # Query users collection by username
-        users_ref = db.collection('users')
-        query = users_ref.where('username', '==', username).limit(1).stream()
-        
-        user_doc = None
-        for doc in query:
-            user_doc = doc
-            break
+        user = User.query.filter_by(username=username).first()
             
-        if user_doc:
-            data = user_doc.to_dict()
-            user = User(uid=user_doc.id, username=data.get('username'), email=data.get('email'), password_hash=data.get('password_hash'))
-            if user.check_password(password):
-                login_user(user)
-                return redirect(url_for('home'))
+        if user and user.check_password(password):
+            login_user(user)
+            return redirect(url_for('home'))
         
         flash('Invalid username or password')
     return render_template('login.html')
@@ -115,32 +118,29 @@ def login():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        if not db:
-             flash('Database configuration error. Please contact admin.')
-             return render_template('signup.html')
-             
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
         
         # Check existing username
-        users_ref = db.collection('users')
-        if any(users_ref.where('username', '==', username).limit(1).stream()):
+        if User.query.filter_by(username=username).first():
             flash('Username already exists')
             return redirect(url_for('signup'))
             
         # Create new user
         password_hash = generate_password_hash(password)
-        new_user_ref = users_ref.document() # Auto ID
-        new_user_ref.set({
-            'username': username,
-            'email': email,
-            'password_hash': password_hash,
-            'created_at': firestore.SERVER_TIMESTAMP
-        })
+        new_user = User(username=username, email=email, password_hash=password_hash)
         
-        flash('Registration successful! Please log in.')
-        return redirect(url_for('login'))
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            flash('Registration successful! Please log in.')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error creating account: {e}")
+            return redirect(url_for('signup'))
+
     return render_template('signup.html')
 
 @app.route('/logout')
@@ -181,18 +181,11 @@ def chat_endpoint():
 
     # --- Permanent Memory (Database-Backed) ---
     history = []
-    if current_user.is_authenticated and db:
-        # Load last 12 messages from Firestore subcollection or main collection
-        # Structure: users/{uid}/chats/{msg_id}
-        chats_ref = db.collection('users').document(current_user.id).collection('chats')
-        docs = chats_ref.order_by('timestamp', direction=firestore.Query.DESCENDING).limit(12).stream()
-        
-        db_history = []
-        for doc in docs:
-            db_history.append(doc.to_dict())
-            
+    if current_user.is_authenticated:
+        # Load last 12 messages from SQL
+        recent_chats = ChatHistory.query.filter_by(user_id=current_user.id).order_by(ChatHistory.timestamp.desc()).limit(12).all()
         # Reverse to get chronological order
-        history = [{"role": msg['role'], "content": msg['content']} for msg in reversed(db_history)]
+        history = [{"role": msg.role, "content": msg.content} for msg in reversed(recent_chats)]
     else:
         # Fallback to session for guests
         if 'chat_history' not in session:
@@ -254,18 +247,12 @@ def chat_endpoint():
         bot_text = response.choices[0].message.content
 
         # --- Save to Permanent Memory ---
-        if current_user.is_authenticated and db:
-            chats_ref = db.collection('users').document(current_user.id).collection('chats')
-            chats_ref.add({
-                'role': 'user',
-                'content': user_message,
-                'timestamp': firestore.SERVER_TIMESTAMP
-            })
-            chats_ref.add({
-                'role': 'assistant',
-                'content': bot_text,
-                'timestamp': firestore.SERVER_TIMESTAMP
-            })
+        if current_user.is_authenticated:
+            user_msg_db = ChatHistory(user_id=current_user.id, role='user', content=user_message)
+            bot_msg_db = ChatHistory(user_id=current_user.id, role='assistant', content=bot_text)
+            db.session.add(user_msg_db)
+            db.session.add(bot_msg_db)
+            db.session.commit()
         else:
             history.append({"role": "user", "content": user_message})
             history.append({"role": "assistant", "content": bot_text})
@@ -306,7 +293,7 @@ def chat_endpoint():
                 "sentiment": "neutral",
                 "action": "none"
             })
-        # ... (Keep existing simple fallback logic or basic error return) ...
+        
         return jsonify({
             "response": f"⚠️ **Connection Error**: I'm having trouble thinking clearly. ({str(e)[:50]})",
             "sentiment": "neutral",
@@ -320,8 +307,6 @@ def get_resources():
 @app.route('/api/request_help', methods=['POST'])
 @login_required
 def request_help():
-    if not db: return jsonify({"error": "Database error"}), 500
-
     data = request.json
     severity = data.get('severity', 'medium')
     message = data.get('message', '')
@@ -329,15 +314,18 @@ def request_help():
     if not message:
         return jsonify({"error": "Message is required"}), 400
         
-    # Store in 'requests' collection
-    db.collection('requests').add({
-        'user_id': current_user.id,
-        'username': current_user.username, # Denormalize for easier access
-        'severity_level': severity,
-        'message': message,
-        'status': 'pending',
-        'timestamp': firestore.SERVER_TIMESTAMP
-    })
+    new_request = HelpRequest(
+        user_id=current_user.id,
+        severity=severity,
+        message=message
+    )
+    
+    try:
+        db.session.add(new_request)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
     
     now = datetime.datetime.now()
     is_after_hours = now.hour < 9 or now.hour >= 17
@@ -352,54 +340,50 @@ def request_help():
 @app.route('/api/log_stress', methods=['POST'])
 @login_required
 def log_stress():
-    if not db: return jsonify({"error": "Database error"}), 500
-    
     data = request.json
     try:
-        db.collection('stress_logs').add({
-            'user_id': current_user.id,
-            'stress_level': data.get('level'),
-            'source': data.get('source'),
-            'timestamp': firestore.SERVER_TIMESTAMP
-        })
+        new_log = StressLog(
+            user_id=current_user.id,
+            stress_level=data.get('level'),
+            source=data.get('source')
+        )
+        db.session.add(new_log)
+        db.session.commit()
         return jsonify({"status": "success", "message": "Stress level logged"}), 200
     except Exception as e:
+        db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/api/stress_history', methods=['GET'])
 @login_required
 def get_stress_history():
-    if not db: return jsonify([])
-
     # Query stress logs for current user
-    logs_ref = db.collection('stress_logs')
-    query = logs_ref.where('user_id', '==', current_user.id).order_by('timestamp', direction=firestore.Query.DESCENDING).limit(7).stream()
+    logs = StressLog.query.filter_by(user_id=current_user.id)\
+        .order_by(StressLog.timestamp.desc())\
+        .limit(7).all()
     
     data = []
-    # Firestore timestamps need conversion
-    for doc in query:
-        log = doc.to_dict()
-        ts = log.get('timestamp')
-        if ts:
-            # Handle if ts is datetime or None (sometimes SERVER_TIMESTAMP is latent)
-            # But usually on read it's a datetime
-            try:
-                dt = ts
-                data.append({
-                    "date": dt.strftime("%b %d"),
-                    "time": dt.strftime("%H:%M"),
-                    "level": log.get('stress_level'),
-                    "source": log.get('source')
-                })
-            except:
-                pass
+    for log in logs:
+        # SQL timestamps are already datetime objects
+        try:
+            dt = log.timestamp
+            data.append({
+                "date": dt.strftime("%b %d"),
+                "time": dt.strftime("%H:%M"),
+                "level": log.stress_level,
+                "source": log.source
+            })
+        except:
+            pass
                 
-    # Return reversed (chronological order) - actually we queried desc, so reversing makes it asc?
-    # Original code: ordered by desc, then reversed.
-    # So [Newest, ..., Oldest] -> Reversed -> [Oldest, ..., Newest]
+    # Return reversed (chronological order)
     return jsonify(data[::-1])
 
 if __name__ == '__main__':
-    # No db.create_all() needed for Firestore
-    port = int(os.environ.get('PORT', 80))
+    # Initialize DB (Auto-create tables for development)
+    with app.app_context():
+        db.create_all()
+        print("DEBUG: Database tables created (if not exist)")
+
+    port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=True)
